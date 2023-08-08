@@ -30,15 +30,15 @@ class myQTable():
             self.n_controls = np.shape(self.controls)[0]
             #print("controls = {}".format(self.controls))
             print('MDP: n states = {}\nn controls = {}'.format(self.n_states, self.n_controls))
-            self.Q_table = np.random.random((self.n_states, self.n_controls ,self.n_controls)) # shape:(state,action_1,action_2)
-            #self.Q_old = np.zeros((self.n_states, self.n_controls ,self.n_controls)) # shape:(state,action_1,action_2)
+            #self.Q_table = np.random.random((self.n_states, self.n_controls ,self.n_controls)) # shape:(state,action_1,action_2)
+            self.Q_table = np.zeros((self.n_states, self.n_controls ,self.n_controls)) # shape:(state,action_1,action_2)
             
             # Q_old[:,11] = 0.01
             # Q_new = np.zeros((n_states, n_controls))v 
-            print("Q shape = {}".format(np.shape(self.Q_old)))
+            print("Q shape = {}".format(np.shape(self.Q_table)))
         
         def proj_W_index(self,mu):
-            minimal = 999
+            minimal = 999999
             index = 0
             for i in range(np.shape(self.states)[0]):
                 distance = np.sum(np.abs(mu - self.states[i]))
@@ -47,3 +47,9 @@ class myQTable():
                     index = i
             #return np.argmin(map(lambda mu2: np.sum(np.abs(mu - mu2)), self.states))
             return index
+
+        def get_state_index(self,state):
+
+            for i in range(self.n_states):
+                if np.array_equal(self.states[i] ,state):
+                    return i

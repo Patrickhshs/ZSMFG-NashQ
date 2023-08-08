@@ -22,8 +22,8 @@ antagonist_table.init_states()
 antagonist_table.init_ctrl()
 #Q_old should be table.Q_old if there is no previous Q-table
 
-Q_old_anta = antagonist_table.Q_old
-Q_old = table.Q_old
+Q_old_anta = antagonist_table.Q_table
+Q_old = table.Q_table
 
 
 
@@ -39,7 +39,7 @@ print(table.controls)
 
 
 
-N_episodes = 2
+N_episodes = 100
 
 
 
@@ -82,8 +82,7 @@ if __name__ == '__main__':
 
                     # print(Q_old[i_mu_1_next])
                     # print(Q_old_anta[i_mu_2_next])
-                    pi_1,pi_2 = env.find_nash_gambit(Q_old[i_mu_1_next],Q_old_anta[i_mu_2_next])
-                    #pi_1,pi_2 = env.get_nash_Q_value(Q_old[i_mu_1_next],Q_old_anta[i_mu_2_next],table)
+                    pi_1,pi_2 = env.get_nash_Q_value(Q_old[i_mu_1_next],Q_old_anta[i_mu_2_next])
                      
                     #print(r_matrix_1)
                     #print(r_matrix_2)
@@ -124,7 +123,5 @@ if __name__ == '__main__':
         # print("***** opt_ctrls = {}".format(opt_ctrls))
         Q_old = Q_new.copy()
         Q_old_anta = Q_new_anta.copy()
-        print(Q_old)
-        print(Q_old_anta)
-        if (i % iter_save == 0) or i==1:
-            np.savez("results_iter{}".format(i), Q=Q_new, n_states_x=table.n_states_x, n_steps_state=table.n_steps_state, n_steps_ctrl=table.n_steps_ctrl, iters=iters, Q_diff_sup=Q_diff_sup, Q_diff_L2=Q_diff_L2)
+        if (i % iter_save == 0):
+            np.savez("historyTables/results_iter{}".format(i), Q=Q_new, n_states_x=table.n_states_x, n_steps_state=table.n_steps_state, n_steps_ctrl=table.n_steps_ctrl, iters=iters, Q_diff_sup=Q_diff_sup, Q_diff_L2=Q_diff_L2)
