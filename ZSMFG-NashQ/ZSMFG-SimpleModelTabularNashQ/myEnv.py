@@ -1,7 +1,7 @@
 from random import random
 import numpy as np
 import nashpy as nash
-import random
+import random as rnd
 from nashpy.algorithms.lemke_howson_lex import lemke_howson_lex
 
 
@@ -11,7 +11,7 @@ class my1dGridEnv(object):
         self.size = size # Dimension of 1D world
         self.n_states = self.size 
         self.n_actions = 3 
-        self.epsilon = [1,0,0] # [0,-1,1]
+        self.epsilon = [0.5,0.25,0.25] # [0,-1,1]
         self.action_space = [0,-1,1]
         self.c = 1 # proportion of the density of other population
         self.T = 0.2
@@ -74,26 +74,26 @@ class my1dGridEnv(object):
         
         return  reward_1, reward_2
 
-    # def get_reward_mat(self,mu_1,mu_2,table):
-    #     reward_mat_1 = np.zeros((table.n_controls,table.n_controls))
-    #     reward_mat_2 = np.zeros((table.n_controls,table.n_controls))
+    def get_reward_mat(self,mu_1,mu_2,table):
+        reward_mat_1 = np.zeros((table.n_controls,table.n_controls))
+        reward_mat_2 = np.zeros((table.n_controls,table.n_controls))
 
 
-    #     simplex_controls = table.controls
-    #     for i in range(len(simplex_controls)):
-    #         for l in range(len(simplex_controls)):
-    #             next_mu_1 = self.get_next_mu(mu_1,simplex_controls[i])
-    #             next_mu_2 = self.get_next_mu(mu_2,simplex_controls[l])
-    #             i_next_1 = table.proj_W_index(next_mu_1)
-    #             i_next_2 = table.proj_W_index(next_mu_2)
+        simplex_controls = table.controls
+        for i in range(len(simplex_controls)):
+            for l in range(len(simplex_controls)):
+                next_mu_1 = self.get_next_mu(mu_1,simplex_controls[i])
+                next_mu_2 = self.get_next_mu(mu_2,simplex_controls[l])
+                i_next_1 = table.proj_W_index(next_mu_1)
+                i_next_2 = table.proj_W_index(next_mu_2)
 
-    #             reward_1, reward_2 = self.get_population_level_reward(table.states[i_next_1], table.states[i_next_2])
-    #             reward_mat_1[i][l] = reward_1
-    #             reward_mat_2[i][l] = reward_2
+                reward_1, reward_2 = self.get_population_level_reward(table.states[i_next_1], table.states[i_next_2])
+                reward_mat_1[i][l] = reward_1
+                reward_mat_2[i][l] = reward_2
 
 
-        
-    #     return  reward_mat_1, reward_mat_2
+                 
+        return  reward_mat_1, reward_mat_2
 
 
 
@@ -110,7 +110,7 @@ class my1dGridEnv(object):
         
 
 
-    def get_nash_Q_value(self,payoff_mat_1,payoff_mat_2):
+    def solve_stage_game(self,payoff_mat_1,payoff_mat_2):
             # Zero sum case solver to get stage nash eq by lemke-Howson
 
             dim = payoff_mat_1.shape[0]
@@ -118,6 +118,7 @@ class my1dGridEnv(object):
             # To handle the problem that sometimes Lemke-Howson implementation will give 
             # wrong returned NE shapes or NAN in value, use different initial_dropped_label value 
             # to find a valid one. 
+            eq_enumeration = []
             for l in range(0, sum(payoff_mat_1.shape) - 1):
                 # Lemke Howson can not solve degenerate matrix.
                 # eq = rps.lemke_howson(initial_dropped_label=l) # The initial_dropped_label is an integer between 0 and sum(A.shape) - 1
@@ -134,8 +135,9 @@ class my1dGridEnv(object):
                 else:   
                     if eq[0].shape[0] ==  dim and eq[1].shape[0] == dim and not np.isnan(eq[0]).any() and not np.isnan(eq[1]).any():
                         # valid shape and valid value (not nan)
-                        final_eq = eq
-                        break
+                        eq_enumeration.append(eq)
+            final_eq = eq_enumeration[rnd.randrange(len(eq_enumeration))]
+            print(final_eq)
             if final_eq is None:
                 raise ValueError('No valid Nash equilibrium is found!')
             return final_eq

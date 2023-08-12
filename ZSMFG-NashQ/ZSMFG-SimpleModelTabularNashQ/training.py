@@ -4,6 +4,8 @@ from myEnv import my1dGridEnv
 
 from myTable import myQTable
 
+from tqdm import tqdm
+
 
 
 #npzfile = np.load("Tabular Q-learning/test10f7a3_paramsBook_from-v3d5_10Pts_gamma0p5_envT1_cont20Pts_contT0p1_cont30pts_contT0p2/test10f7_results_iter10.npz")
@@ -39,7 +41,7 @@ print(table.controls)
 
 
 
-N_episodes = 100
+N_episodes = 20
 
 
 
@@ -47,7 +49,7 @@ iters = []
 Q_diff_sup = []
 Q_diff_L2 = []
 if __name__ == '__main__':
-    for i in range(1, 1+N_episodes):
+    for i in tqdm(range(1, 1+N_episodes)):
         print('\n\n======================================== Episode {}\n\n'.format(i))
         Q_new = (1-lr) * Q_old.copy()#First part of Q_new
         Q_new_anta = (1-lr) * Q_old_anta.copy()
