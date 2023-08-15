@@ -73,7 +73,6 @@ class NashQPlayer():
                 #     strategies = self.env.get_nash_Q_value(self.Q_1.Q_table[self.Q_1.get_state_index(current_states[0])],
                 #     self.Q_2.Q_table[self.Q_2.get_state_index(current_states[1])])
 
-                #     # Is it the right way to sample alpha bar?
                 #     i_alpha_1 = np.random.choice(len(strategies[0]),p=strategies[0])
                 #     i_alpha_2 = np.random.choice(len(strategies[1]),p=strategies[1])
 
