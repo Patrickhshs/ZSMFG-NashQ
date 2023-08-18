@@ -61,12 +61,13 @@ class DDPG(object):
 
         
 
-        actor_loss = -mean(self.critic(batch_states[0],self.actor(batch_states[0]),self.actor(batch_states[1]))
-                    *self.actor(batch_states))
+        actor_policy_loss = -torch.mean(self.critic(batch_states[0],self.actor(batch_states[0]),self.actor(batch_states[1]))#*self.actor(batch_states))
+                    )
+        #actor_policy_loss += torch.mean((self.actor(batch_states)**2))*1e-3
 
-        print('critic_loss is {}, actor_loss is {}'.format(critic_loss, actor_loss))
+        print('critic_loss is {}, actor_loss is {}'.format(critic_loss, actor_policy_loss))
         self.actor_optimizer.zero_grad()
-        actor_loss.backward()
+        actor_policy_loss.backward()
         self.actor_optimizer.step()
         self.critic_optimizer.zero_grad()
         critic_loss.backward()

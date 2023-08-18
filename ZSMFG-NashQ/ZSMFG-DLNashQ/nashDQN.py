@@ -8,12 +8,13 @@ from base import ValueNet
 import itertools
 import numpy as np
 from tools import ReplayBuffer
+from copy import copy
 
 
 
 class NashDQN(object):
 
-    def __init__(self,lr,gamma,batch_size,env,replay_buffer=ReplayBuffer,max_iteration=1000,state_dim = 4,epsilon=0.5,n_steps_ctrl=10,max_episode=100,baseNet=ValueNet):
+    def __init__(self,lr,gamma,batch_size,env,replay_buffer=ReplayBuffer,max_iteration=1000,state_dim = 4,save_rate = 100,epsilon=0.5,n_steps_ctrl=10,max_episode=100,baseNet=ValueNet):
 
         self.lr = lr
         self.gamma = gamma
@@ -27,10 +28,17 @@ class NashDQN(object):
         self.max_episode = max_episode
         self.n_steps_ctrl = n_steps_ctrl
         self.max_iteration = max_iteration
+        self.training_step = 0
+        self.save_rate = save_rate
         self.action_space = self.init_action_space()
-        self.payoff_mat_1,self.payoff_mat_2 = self.generate_payoff_matrix()
+        #self.payoff_mat_1,self.payoff_mat_2 = self.generate_payoff_matrix()
         self.optimizer_1 = torch.optim.AdamW(self.Q_1.parameters(),lr=self.lr)
         self.optimizer_2 = torch.optim.AdamW(self.Q_2.parameters(),lr=self.lr)
+        # To-do:
+        # set a target network to avoid overfitting
+
+        self.target_Q_1 = copy.deepcopy(baseNet)  
+        self.target_Q_2 = copy.deepcopy(baseNet)
 
     
     def init_action_space(self):
@@ -44,8 +52,8 @@ class NashDQN(object):
         mat_2 = np.zeros(m,n)
         for i in range(m):
             for j in range(n):
-                mat_1 = self.Q_1(states[0],self.action_space[i],self.action_space[j])
-                mat_2 = self.Q_2(states[1],self.action_space[j],self.action_space[i])
+                mat_1 = self.target_Q_1(states[0],self.action_space[i],self.action_space[j])
+                mat_2 = self.target_Q_2(states[1],self.action_space[j],self.action_space[i])
 
         return mat_1,mat_2
 
@@ -53,7 +61,7 @@ class NashDQN(object):
     def training(self):
         for l in tqdm(range(self.max_iteration)):
             for i in tqdm(range(self.max_episode)):
-                payoff_mat_1, payoff_mat_2 =  self.generate_payoff_matrix()
+                payoff_mat_1, payoff_mat_2 =  self.generate_payoff_matrix(self.current_states)
                 random_number = rnd.uniform(0,1)
                 if random_number >= self.epsilon:
                     strategies = self.env.solve_stage_game(payoff_mat_1,payoff_mat_2)
@@ -82,8 +90,8 @@ class NashDQN(object):
                     target_y_1[i] = batch_rewards[i] + self.gamma*torch.dot(torch.dot(pi_1,payoff_mat_1),pi_2)
                     target_y_2[i] = batch_rewards[i] + self.gamma*torch.dot(torch.dot(pi_1,payoff_mat_2),pi_2)
                 
-                loss_1 = nn.MSELoss(target_y_1,self.Q_1(batch_state,batch_actions[1],batch_actions[2]))
-                loss_2 = nn.MSELoss(target_y_2,self.Q_2(batch_state,batch_actions[1],batch_actions[2]))
+                loss_1 = nn.MSELoss(target_y_1,self.Q_1(batch_state,batch_actions[0],batch_actions[1]))
+                loss_2 = nn.MSELoss(target_y_2,self.Q_2(batch_state,batch_actions[0],batch_actions[1]))
 
                 self.optimizer_1.zero_grad()
                 loss_1.backward()
@@ -93,6 +101,8 @@ class NashDQN(object):
                 self.optimizer_2.step()
                 if self.training_step > 0 and self.training_step % self.save_rate == 0:
                     self.save_model(self.training_step)
+                    self.target_Q_1 = copy.deepcopy(self.Q_1)
+                    self.target_Q_2 = copy.deepcopy(self.Q_2)
                 self.training_step +=1
 
     def save_model(self,train_step):

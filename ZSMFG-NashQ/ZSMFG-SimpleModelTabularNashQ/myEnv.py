@@ -68,8 +68,8 @@ class my1dGridEnv(object):
 
     # visit every action pair of player 1 and player 2 to get reward matrix
     def get_population_level_reward(self,mu_1,mu_2):
-        reward_1 = self.c*(np.dot(mu_1,mu_2.T))
-        reward_2 = -self.c*(np.dot(mu_1,mu_2.T))
+        reward_1 = self.c*(np.dot(mu_1,mu_2))
+        reward_2 = -self.c*(np.dot(mu_1,mu_2))
         
         
         return  reward_1, reward_2
@@ -137,7 +137,7 @@ class my1dGridEnv(object):
                         # valid shape and valid value (not nan)
                         eq_enumeration.append(eq)
             final_eq = eq_enumeration[rnd.randrange(len(eq_enumeration))]
-            print(final_eq)
+            #print(final_eq)
             if final_eq is None:
                 raise ValueError('No valid Nash equilibrium is found!')
             return final_eq
