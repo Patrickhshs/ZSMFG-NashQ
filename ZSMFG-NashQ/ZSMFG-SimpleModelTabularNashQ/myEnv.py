@@ -14,7 +14,7 @@ class my1dGridEnv(object):
         self.epsilon = [0.5,0.25,0.25] # [0,-1,1]
         self.action_space = [0,-1,1]
         self.c = 1 # proportion of the density of other population
-        self.T = 0.2
+        #self.T = 0.2
 
 
 

@@ -40,11 +40,11 @@ class DDPG(object):
         self.critic_optimizer = torch.optim.AdamW(self.critic.parameters(),lr=self.lr)
 
     
-    def choose_action(self,state):
-        state = torch.unsqueeze(torch.tensor(state, dtype=torch.float),0)
-        action = self.actor(state).data.numpy().flatten()
+    # def choose_action(self,state):
+    #     state = torch.unsqueeze(torch.tensor(state, dtype=torch.float),0)
+    #     action = self.actor(state).data.numpy().flatten()
 
-        return action
+    #     return action
 
 
     def train(self,replay_buffer,other_agent):
@@ -59,7 +59,7 @@ class DDPG(object):
         current_Q = self.critic(batch_states,batch_action[0],batch_action[1])
         critic_loss = nn.MSELoss(Q_prime, current_Q)
 
-        
+        # add noise
 
         actor_policy_loss = -torch.mean(self.critic(batch_states[0],self.actor(batch_states[0]),self.actor(batch_states[1]))#*self.actor(batch_states))
                     )

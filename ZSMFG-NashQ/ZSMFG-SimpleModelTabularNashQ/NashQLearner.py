@@ -1,3 +1,4 @@
+from math import exp
 from random import random
 import random as rnd
 import nashpy as nash
@@ -32,25 +33,39 @@ class NashQPlayer():
         self.Q_2_diff_sup = []
         self.Q_2_diff_L2 = []
 
-    def lr_func(self,itrs):
-
-        return 1/itrs
-    
-    def training(self):
         self.Q_1.init_states() #initialize the states
         self.Q_1.init_ctrl()
         self.Q_2.init_states() #initialize the states
         self.Q_2.init_ctrl()
+        
+
+        self.Q_1_visited_times = np.ones((self.Q_1.n_states,self.Q_1.n_controls,self.Q_2.n_controls))
+        self.Q_2_visited_times = np.ones((self.Q_2.n_states,self.Q_1.n_controls,self.Q_2.n_controls))
+        #print(self.Q_1_visited_times.shape)
+
+    def lr_func(self,number_of_visited):
+
+        return 1 / number_of_visited
+
+    def adjust_eps(self,eps_start,eps_end,current_step):
+        eps_threshold = eps_start
+        eps_threshold = eps_end + (eps_start-eps_end)* exp(-1. *current_step/self.max_itrs)
+        
+        return eps_threshold
+    
+    def training(self):
 
         
         
         #current_state = [self.Q_1.states[random.randint(self.Q_1.n_states)],self.Q_2.states[random.randint(self.Q_2.n_states)]]
+        
+        
+        
         current_states = [self.Q_1.states[-1],self.Q_2.states[0]]
-        
-        
         for i in tqdm(range(1,self.max_itrs+1)):
             if self.MonteCarlo:
-
+                
+                self.epsilon = self.adjust_eps(0.9,0.05,i)
                 if self.decision_strategy == "random":
                     i_alpha_1 = self.Q_1.controls[rnd.randrange(self.Q_1.n_controls)]
                     i_alpha_2 = self.Q_2.controls[rnd.randrange(self.Q_2.n_controls)]
@@ -69,12 +84,12 @@ class NashQPlayer():
                         i_alpha_2 = rnd.randrange(self.Q_2.n_controls)
 
                 # epsion = 0
-                # if self.decision_strategy == "greedy":
-                #     strategies = self.env.get_nash_Q_value(self.Q_1.Q_table[self.Q_1.get_state_index(current_states[0])],
-                #     self.Q_2.Q_table[self.Q_2.get_state_index(current_states[1])])
+                if self.decision_strategy == "greedy":
+                    strategies = self.env.get_nash_Q_value(self.Q_1.Q_table[self.Q_1.get_state_index(current_states[0])],
+                    self.Q_2.Q_table[self.Q_2.get_state_index(current_states[1])])
 
-                #     i_alpha_1 = np.random.choice(len(strategies[0]),p=strategies[0])
-                #     i_alpha_2 = np.random.choice(len(strategies[1]),p=strategies[1])
+                    i_alpha_1 = np.random.choice(len(strategies[0]),p=strategies[0])
+                    i_alpha_2 = np.random.choice(len(strategies[1]),p=strategies[1])
 
 
                 next_mu_1 = self.env.get_next_mu(current_states[0],self.Q_1.controls[i_alpha_1])
@@ -85,7 +100,6 @@ class NashQPlayer():
 
                 r_next_1, r_next_2 = self.env.get_population_level_reward(self.Q_1.states[i_mu_1_next], self.Q_2.states[i_mu_2_next])
                 
-                # do we need 
                 pi_1,pi_2 = self.env.solve_stage_game(self.Q_1.Q_table[i_mu_1_next],self.Q_2.Q_table[i_mu_2_next])
 
                 Q_1_old = self.Q_1.Q_table.copy()
@@ -93,14 +107,24 @@ class NashQPlayer():
                 Q_2_old = self.Q_2.Q_table.copy()
                 
                 # lr as a function of t
-                self.lr = self.lr_func(i)
+                self.lr_Q_1 = self.lr_func(self.Q_1_visited_times[self.Q_1.get_state_index(current_states[0])][i_alpha_1][i_alpha_2])
+                self.lr_Q_2 = self.lr_func(self.Q_2_visited_times[self.Q_2.get_state_index(current_states[1])][i_alpha_1][i_alpha_2])
 
-                self.Q_1.Q_table[self.Q_1.get_state_index(current_states[0])][i_alpha_1][i_alpha_2] = ((1-self.lr)*self.Q_1.Q_table[self.Q_1.get_state_index(current_states[0])][i_alpha_1][i_alpha_2]
-                    + self.lr*(r_next_1 + self.disct_fct * np.dot(np.dot(pi_1, self.Q_1.Q_table[i_mu_1_next]),pi_2)))
+                # self.lr_Q_1 = 1/i
+                # self.lr_Q_2 = 1/i
 
-                self.Q_2.Q_table[self.Q_2.get_state_index(current_states[1])][i_alpha_1][i_alpha_2] = ((1-self.lr)*self.Q_2.Q_table[self.Q_2.get_state_index(current_states[0])][i_alpha_1][i_alpha_2]
-                    + self.lr*(r_next_2 + self.disct_fct * np.dot(np.dot(pi_1, self.Q_2.Q_table[i_mu_2_next]),pi_2)))
+                self.Q_1_visited_times[self.Q_1.get_state_index(current_states[0])][i_alpha_1][i_alpha_2] += 1
+                self.Q_2_visited_times[self.Q_2.get_state_index(current_states[1])][i_alpha_1][i_alpha_2] += 1
 
+                self.Q_1.Q_table[self.Q_1.get_state_index(current_states[0])][i_alpha_1][i_alpha_2] = ((1-self.lr) * self.Q_1.Q_table[self.Q_1.get_state_index(current_states[0])][i_alpha_1][i_alpha_2]
+                    + self.lr_Q_1*(r_next_1 + self.disct_fct * np.dot(np.dot(pi_1, self.Q_1.Q_table[i_mu_1_next]),pi_2)))
+
+                self.Q_2.Q_table[self.Q_2.get_state_index(current_states[1])][i_alpha_1][i_alpha_2] = ((1-self.lr) * self.Q_2.Q_table[self.Q_2.get_state_index(current_states[1])][i_alpha_1][i_alpha_2]
+                    + self.lr_Q_2*(r_next_2 + self.disct_fct * np.dot(np.dot(pi_1, self.Q_2.Q_table[i_mu_2_next]),pi_2)))
+
+                current_states = [next_mu_1,next_mu_2]
+
+                # Check covergence
                 self.Q_1_diff_sup.append(np.max(np.abs(self.Q_1.Q_table - Q_1_old)))
                 #
                 print("***** sup|Q_new - Q_old| = {}".format(self.Q_1_diff_sup[-1]))
@@ -114,13 +138,15 @@ class NashQPlayer():
                 print("***** L2|Q_new - Q_old| = {}\n".format(self.Q_2_diff_L2[-1]))
                 if (i % self.iter_save == 0):
                     np.savez("ZSMFG-NashQ/historyTables/Q_1_and_Q_2_results_iter{}".format(i), Q_1=self.Q_1.Q_table,Q_2=self.Q_2.Q_table, n_states_x=self.Q_1.n_states_x, n_steps_state=self.Q_1.n_steps_state,
-                    n_steps_ctrl=self.Q_1.n_steps_ctrl, iters=self.max_itrs, Q_1_diff_sup=self.Q_1_diff_sup, Q_1_diff_L2=self.Q_1_diff_L2,Q_2_diff_sup=self.Q_2_diff_sup, Q_2_diff_L2=self.Q_2_diff_L2)
+                    n_steps_ctrl=self.Q_1.n_steps_ctrl, iters=self.max_itrs, Q_1_diff_sup=self.Q_1_diff_sup, Q_1_diff_L2=self.Q_1_diff_L2,Q_2_diff_sup=self.Q_2_diff_sup, Q_2_diff_L2=self.Q_2_diff_L2,
+                    Q_1_visited=self.Q_1_visited_times,Q_2_visited = self.Q_2_visited_times)
 
 
 
             else:
                 Q_1_old = self.Q_1.Q_table.copy()
                 Q_2_old = self.Q_2.Q_table.copy()
+                # In No MC version, we visit each (s,a1,a2),so lr always decrease with itr times
                 self.lr = self.lr_func(i)
                 # Monte Carlo T/F
                 for i_mu in range(self.Q_1.n_states):
@@ -150,11 +176,13 @@ class NashQPlayer():
                             # print("mu = {},\t mu_next = {}, \t mu_next_proj = {}".format(mu_1, next_mu_1,self.Q_1.states[i_mu_1_next]))
                             
                             # print(Q_old[i_mu_1_next][i_alpha_1][i_alpha_2])
-                            self.Q_1.Q_table[self.Q_1.get_state_index(current_states[0])][i_alpha_1][i_alpha_2] = ((1-self.lr)*self.Q_1.Q_table[self.Q_1.get_state_index(current_states[0])][i_alpha_1][i_alpha_2]
+                            self.Q_1.Q_table[self.Q_1.get_state_index(mu_1)][i_alpha_1][i_alpha_2] = ((1-self.lr)*self.Q_1.Q_table[self.Q_1.get_state_index(current_states[0])][i_alpha_1][i_alpha_2]
                                 + self.lr*(r_next_1 + self.disct_fct * np.dot(np.dot(pi_1, self.Q_1.Q_table[i_mu_1_next]),pi_2)))
 
-                            self.Q_2.Q_table[self.Q_2.get_state_index(current_states[1])][i_alpha_1][i_alpha_2] = ((1-self.lr)*self.Q_2.Q_table[self.Q_2.get_state_index(current_states[0])][i_alpha_1][i_alpha_2]
+                            self.Q_2.Q_table[self.Q_2.get_state_index(mu_2)][i_alpha_1][i_alpha_2] = ((1-self.lr)*self.Q_2.Q_table[self.Q_2.get_state_index(current_states[1])][i_alpha_1][i_alpha_2]
                                 + self.lr*(r_next_2 + self.disct_fct * np.dot(np.dot(pi_1, self.Q_2.Q_table[i_mu_2_next]),pi_2)))
+                            
+                            
 
                 
                 
@@ -175,7 +203,7 @@ class NashQPlayer():
                     n_steps_ctrl=self.Q_1.n_steps_ctrl, iters=self.max_itrs, Q_1_diff_sup=self.Q_1_diff_sup, Q_1_diff_L2=self.Q_1_diff_L2,Q_2_diff_sup=self.Q_2_diff_sup, Q_2_diff_L2=self.Q_2_diff_L2)
                 
                 continue
-            current_states = [self.Q_1.states[i_mu_1_next],self.Q_2.states[i_mu_2_next]]
+            
             
         return self.Q_1, self.Q_2
 
@@ -192,6 +220,7 @@ class NashQPlayer():
         
         for i in tqdm(range(1,max_steps+1)):
             if self.MonteCarlo:
+                self.epsilon = self.adjust_eps(0.9,0.1,i)
                 i_alpha_2 = np.random.choice(len(pi_fixed[tuple(map(tuple,current_states))]),p = pi_fixed[tuple(map(tuple,current_states))])
                 if self.decision_strategy == "random":
                     i_alpha_1 = self.table.controls[rnd.randrange(Q.n_controls)]
@@ -226,7 +255,7 @@ class NashQPlayer():
                 Q.Q_table[Q.get_state_index(current_states[0])][i_alpha_1][i_alpha_2] = ((1-self.lr)*Q.Q_table[Q.get_state_index(current_states[0])][i_alpha_1][i_alpha_2]
                     + self.lr*(r_next_1 + self.disct_fct * Q.Q_table[i_mu_1_next][i_alpha_1][i_alpha_2]))
 
-                Q_fixed.Q_table[Q_fixed.get_state_index(current_states[0])][i_alpha_1][i_alpha_2] = ((1-self.lr)*Q_fixed.Q_table[Q_fixed.get_state_index(current_states[0])][i_alpha_1][i_alpha_2]
+                Q_fixed.Q_table[Q_fixed.get_state_index(current_states[1])][i_alpha_1][i_alpha_2] = ((1-self.lr)*Q_fixed.Q_table[Q_fixed.get_state_index(current_states[1])][i_alpha_1][i_alpha_2]
                     + self.lr*(r_next_2 + self.disct_fct * Q_fixed.Q_table[i_mu_2_next][i_alpha_1][i_alpha_2]))
             else:
                 for i_mu in range(Q.n_states):
@@ -259,7 +288,7 @@ class NashQPlayer():
                             total_reward += r_next_1
                             Q.Q_table[Q.get_state_index(current_states[0])][i_alpha_1][i_alpha_2] = ((1-self.lr)*Q.Q_table[Q.get_state_index(current_states[0])][i_alpha_1][i_alpha_2]
                     + self.lr*(r_next_1 + self.disct_fct * np.max(Q.Q_table[i_mu_1_next][i_alpha_1])))
-                            Q_fixed.Q_table[self.Q_2.get_state_index(current_states[0])][i_alpha_1][i_alpha_2] = ((1-self.lr)*self.Q_2.Q_table[self.Q_2.get_state_index(current_states[0])][i_alpha_1][i_alpha_2]
+                            Q_fixed.Q_table[Q_fixed.get_state_index(current_states[1])][i_alpha_1][i_alpha_2] = ((1-self.lr)*Q_fixed.Q_2.Q_table[Q_fixed.get_state_index(current_states[1])][i_alpha_1][i_alpha_2]
                     + self.lr*(r_next_2 + self.disct_fct * np.max(Q_fixed.Q_table[i_mu_2_next][i_alpha_2])))
                 
                 continue
