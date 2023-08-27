@@ -135,7 +135,8 @@ class my1dGridEnv(object):
                 else:   
                     if eq[0].shape[0] ==  dim and eq[1].shape[0] == dim and not np.isnan(eq[0]).any() and not np.isnan(eq[1]).any():
                         # valid shape and valid value (not nan)
-                        eq_enumeration.append(eq)
+                        return eq
+                        #eq_enumeration.append(eq)
             final_eq = eq_enumeration[rnd.randrange(len(eq_enumeration))]
             #print(final_eq)
             if final_eq is None:
