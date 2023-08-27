@@ -5,7 +5,7 @@ import itertools
 
 class myQTable():
     
-        def __init__(self,n_states_x=3 ,n_steps_state=3,history_table=None):
+        def __init__(self,n_states_x=3 ,n_steps_state=5,history_table=None):
             self.n_states_x=n_states_x
             self.n_steps_state=n_steps_state # big N in the simplex discretization 
             self.n_steps_ctrl = 3
@@ -38,6 +38,7 @@ class myQTable():
 
                 self.Q_table = np.random.random((self.n_states, self.n_controls ,self.n_controls)) # shape:(state,action_1,action_2)
                 #self.Q_table = np.ones((self.n_states, self.n_controls ,self.n_controls)) # shape:(state,action_1,action_2)
+                #self.Q_table = np.zeros((self.n_states, self.n_controls ,self.n_controls)) # shape:(state,action_1,action_2)
             
             
             # Q_old[:,11] = 0.01

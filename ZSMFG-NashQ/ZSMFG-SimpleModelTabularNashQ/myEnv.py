@@ -132,6 +132,8 @@ class my1dGridEnv(object):
                         # Skip to next label
                         print("Skipping label, no dropped label found")
                         continue
+                    elif "pivot" in str(e):
+                        continue
                 else:   
                     if eq[0].shape[0] ==  dim and eq[1].shape[0] == dim and not np.isnan(eq[0]).any() and not np.isnan(eq[1]).any():
                         # valid shape and valid value (not nan)
@@ -145,8 +147,8 @@ class my1dGridEnv(object):
             
             # game = nash.Game(payoff_mat_1, payoff_mat_2)
 
-            # #equilibriums = list(game.support_enumeration())
-            # equilibriums = list(game.lemke_howson_enumeration())
+            # equilibriums = list(game.support_enumeration())
+            # #equilibriums = list(game.lemke_howson_enumeration())
             # # #equilibria = game.vertex_enumeration()
             # greedy_equilibrium = equilibriums[random.randrange(len(equilibriums))]
             # ##print(greedy_equilibrium)
@@ -170,7 +172,7 @@ class my1dGridEnv(object):
             #                 _pi[1])) is False:
             #             pi = _pi
             #             break
-            # print(pi)
+            # #print(pi)
             # if pi is None:
             #     # pi1 = np.repeat(
             #     #     1.0 / table.n_controls, table.n_controls)

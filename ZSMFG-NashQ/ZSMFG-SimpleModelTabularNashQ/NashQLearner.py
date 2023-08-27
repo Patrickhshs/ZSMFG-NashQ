@@ -312,16 +312,17 @@ class NashQPlayer():
             
             Q_1_stage_table = Q_1.Q_table[Q_1.get_state_index(current_states[0])]
             Q_2_stage_table = Q_2.Q_table[Q_2.get_state_index(current_states[1])]
-            print(Q_1_stage_table.shape)
-            print(Q_2_stage_table.shape)
+            #print(Q_1_stage_table==Q_2_stage_table)
             # get_nash_Q_value
-
+            print(current_states)
             pi_1,pi_2 = env.solve_stage_game(Q_1_stage_table,Q_2_stage_table)
             policy_1[tuple(map(tuple,current_states))] = pi_1
             policy_2[tuple(map(tuple,current_states))] = pi_2
 
             i_alpha_1 = np.random.choice(len(pi_1),p=pi_1)
             i_alpha_2 = np.random.choice(len(pi_2),p=pi_2)
+            # print(pi_1)
+            # print(pi_2)
 
             next_mu_1 = env.get_next_mu(current_states[0],Q_1.controls[i_alpha_1])
             next_mu_2 = env.get_next_mu(current_states[1],Q_2.controls[i_alpha_2])
@@ -330,7 +331,10 @@ class NashQPlayer():
             r_2 += reward_2
             i_mu_1_next = Q_1.proj_W_index(next_mu_1) 
             i_mu_2_next = Q_2.proj_W_index(next_mu_2)
+            # print(i_mu_1_next)
+            # print(i_mu_2_next)
             current_states = [Q_1.states[i_mu_1_next],Q_2.states[i_mu_2_next]]
+            
         
         return policy_1, policy_2, r_1, r_2
     
