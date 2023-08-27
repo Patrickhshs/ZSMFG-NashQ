@@ -31,7 +31,7 @@ class myQTable():
             #print("controls = {}".format(self.controls))
             print('MDP: n states = {}\nn controls = {}'.format(self.n_states, self.n_controls))
             #self.Q_table = np.random.random((self.n_states, self.n_controls ,self.n_controls)) # shape:(state,action_1,action_2)
-            self.Q_table = np.zeros((self.n_states, self.n_controls ,self.n_controls)) # shape:(state,action_1,action_2)
+            self.Q_table = np.ones((self.n_states, self.n_controls ,self.n_controls)) # shape:(state,action_1,action_2)
             
             # Q_old[:,11] = 0.01
             # Q_new = np.zeros((n_states, n_controls))v 
