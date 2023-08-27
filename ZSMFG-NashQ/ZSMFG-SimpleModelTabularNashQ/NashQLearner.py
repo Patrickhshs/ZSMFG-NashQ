@@ -116,13 +116,13 @@ class NashQPlayer():
                 self.Q_1_visited_times[self.Q_1.get_state_index(current_states[0])][i_alpha_1][i_alpha_2] += 1
                 self.Q_2_visited_times[self.Q_2.get_state_index(current_states[1])][i_alpha_1][i_alpha_2] += 1
 
-                self.Q_1.Q_table[self.Q_1.get_state_index(current_states[0])][i_alpha_1][i_alpha_2] = ((1-self.lr) * self.Q_1.Q_table[self.Q_1.get_state_index(current_states[0])][i_alpha_1][i_alpha_2]
+                self.Q_1.Q_table[self.Q_1.get_state_index(current_states[0])][i_alpha_1][i_alpha_2] = ((1-self.lr_Q_1) * self.Q_1.Q_table[self.Q_1.get_state_index(current_states[0])][i_alpha_1][i_alpha_2]
                     + self.lr_Q_1*(r_next_1 + self.disct_fct * np.dot(np.dot(pi_1, self.Q_1.Q_table[i_mu_1_next]),pi_2)))
 
-                self.Q_2.Q_table[self.Q_2.get_state_index(current_states[1])][i_alpha_1][i_alpha_2] = ((1-self.lr) * self.Q_2.Q_table[self.Q_2.get_state_index(current_states[1])][i_alpha_1][i_alpha_2]
+                self.Q_2.Q_table[self.Q_2.get_state_index(current_states[1])][i_alpha_1][i_alpha_2] = ((1-self.lr_Q_2) * self.Q_2.Q_table[self.Q_2.get_state_index(current_states[1])][i_alpha_1][i_alpha_2]
                     + self.lr_Q_2*(r_next_2 + self.disct_fct * np.dot(np.dot(pi_1, self.Q_2.Q_table[i_mu_2_next]),pi_2)))
 
-                current_states = [next_mu_1,next_mu_2]
+                current_states = [self.Q_1.states[i_mu_1_next],self.Q_2.states[i_mu_2_next]]
 
                 # Check covergence
                 self.Q_1_diff_sup.append(np.max(np.abs(self.Q_1.Q_table - Q_1_old)))
@@ -137,7 +137,7 @@ class NashQPlayer():
                 self.Q_2_diff_L2.append(np.sqrt(np.sum(np.square(self.Q_2.Q_table - Q_2_old))))
                 print("***** L2|Q_new - Q_old| = {}\n".format(self.Q_2_diff_L2[-1]))
                 if (i % self.iter_save == 0):
-                    np.savez("ZSMFG-NashQ/historyTables/Q_1_and_Q_2_results_iter{}".format(i), Q_1=self.Q_1.Q_table,Q_2=self.Q_2.Q_table, n_states_x=self.Q_1.n_states_x, n_steps_state=self.Q_1.n_steps_state,
+                    np.savez("ZSMFG-NashQ/historyTables/Q_MC_zeros_results_iter{}".format(i), Q_1=self.Q_1.Q_table,Q_2=self.Q_2.Q_table, n_states_x=self.Q_1.n_states_x, n_steps_state=self.Q_1.n_steps_state,
                     n_steps_ctrl=self.Q_1.n_steps_ctrl, iters=self.max_itrs, Q_1_diff_sup=self.Q_1_diff_sup, Q_1_diff_L2=self.Q_1_diff_L2,Q_2_diff_sup=self.Q_2_diff_sup, Q_2_diff_L2=self.Q_2_diff_L2,
                     Q_1_visited=self.Q_1_visited_times,Q_2_visited = self.Q_2_visited_times)
 
@@ -248,7 +248,7 @@ class NashQPlayer():
 
                 r_next_1, r_next_2 = env.get_population_level_reward(Q.states[i_mu_1_next], Q_fixed.states[i_mu_2_next])
                 
-
+                #self.lr_Q_1 = sel
                 total_reward_1 += r_next_1
                 total_reward_2 += r_next_2
 
