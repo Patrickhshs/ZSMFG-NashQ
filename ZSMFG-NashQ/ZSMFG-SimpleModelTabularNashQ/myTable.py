@@ -9,7 +9,7 @@ class myQTable():
             self.n_states_x=n_states_x
             self.n_steps_state=n_steps_state # big N in the simplex discretization 
             self.n_steps_ctrl = 3
-            self.history_path = history_table
+            self.history_table = history_table
 
         def init_states(self):
             

@@ -306,12 +306,14 @@ class NashQPlayer():
 
         policy_1 = dict()
         policy_2 = dict()
-        #dictionary instead of list, states as keys
+        # dictionary instead of list, states as keys
         for i in tqdm(range(max_steps)):
             #print(current_states)
+            
             Q_1_stage_table = Q_1.Q_table[Q_1.get_state_index(current_states[0])]
             Q_2_stage_table = Q_2.Q_table[Q_2.get_state_index(current_states[1])]
-
+            print(Q_1_stage_table.shape)
+            print(Q_2_stage_table.shape)
             # get_nash_Q_value
 
             pi_1,pi_2 = env.solve_stage_game(Q_1_stage_table,Q_2_stage_table)
