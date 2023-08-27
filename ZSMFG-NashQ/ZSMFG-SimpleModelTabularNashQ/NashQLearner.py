@@ -8,14 +8,16 @@ import copy
 
 class NashQPlayer():
 
-    def __init__(self, env,table_type,
+    def __init__(self, env,
                 learning_rate = 0.5,
                 iterations = 20,
                 discount_factor = 0.7,
                 decision_strategy = "epsilon-greedy",
                 epsilon = 0.5,
                 MonteCarlo = False,
-                iter_save = 20
+                iter_save = 20,
+                Q_1_table = None,
+                Q_2_table = None
                 ):
         self.env = env
         self.lr = learning_rate
@@ -23,8 +25,8 @@ class NashQPlayer():
         self.disct_fct = discount_factor
         self.decision_strategy = decision_strategy
         self.epsilon = epsilon
-        self.Q_1 = table_type
-        self.Q_2 = table_type
+        self.Q_1 = Q_1_table
+        self.Q_2 =  Q_2_table
         self.MonteCarlo = MonteCarlo
         self.iter_save = iter_save
         # self.iters = []
@@ -220,7 +222,7 @@ class NashQPlayer():
         
         for i in tqdm(range(1,max_steps+1)):
             if self.MonteCarlo:
-                self.epsilon = self.adjust_eps(0.9,0.1,i)
+                self.epsilon = self.adjust_eps(0.9,0.05,i)
                 i_alpha_2 = np.random.choice(len(pi_fixed[tuple(map(tuple,current_states))]),p = pi_fixed[tuple(map(tuple,current_states))])
                 if self.decision_strategy == "random":
                     i_alpha_1 = self.table.controls[rnd.randrange(Q.n_controls)]
