@@ -29,7 +29,8 @@ class my1dGridEnv(object):
         # pi=[p_stay,p_left,p_right]
         trans_matrix = np.zeros((self.n_states,self.n_states))
         epsilon_matrix = np.zeros((self.n_states,self.n_states))
-
+        self.epsilon = np.random.rand(3)
+        self.epsilon /=np.sum(self.epsilon)
         for i in range(self.n_states):
             if i==0:
                 trans_matrix[self.get_index(i),self.get_index(i)] = pi[0]
@@ -101,9 +102,9 @@ class my1dGridEnv(object):
 
     def get_next_mu(self,mu,strategy):
         transi_mat,epi_mat = self.cal_transition_matrix(strategy)
-        P = np.dot(transi_mat,epi_mat)
+        P = transi_mat@epi_mat
 
-        return np.dot(P,mu)
+        return P@mu
 
 
 

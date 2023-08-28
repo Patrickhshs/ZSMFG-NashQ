@@ -98,9 +98,11 @@ class NashQPlayer():
 
                 # print(i_alpha_1,i_alpha_2)
                 # print(self.Q_1.controls[i_alpha_1],self.Q_2.controls[i_alpha_2])
+                i_alpha_1 = 0
+                i_alpha_2 = 0
                 next_mu_1 = self.env.get_next_mu(current_states[0],self.Q_1.controls[i_alpha_1])
                 next_mu_2 = self.env.get_next_mu(current_states[1],self.Q_2.controls[i_alpha_2])
-                print(next_mu_1,next_mu_2)
+                #print(next_mu_1,next_mu_2)
                 
 
                 i_mu_1_next = self.Q_1.proj_W_index(next_mu_1) # find its most nearest mu

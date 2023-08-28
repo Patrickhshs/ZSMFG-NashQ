@@ -5,7 +5,7 @@ import itertools
 
 class myQTable():
     
-        def __init__(self,n_states_x= 4 ,n_steps_state= 36,history_table=None):
+        def __init__(self,n_states_x= 4 ,n_steps_state= 100,history_table=None):
             self.n_states_x=n_states_x
             self.n_steps_state=n_steps_state # big N in the simplex discretization 
             self.n_steps_ctrl = 8
