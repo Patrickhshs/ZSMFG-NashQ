@@ -3,15 +3,16 @@ import numpy as np
 import nashpy as nash
 import random as rnd
 from nashpy.algorithms.lemke_howson_lex import lemke_howson_lex
+from ecos_solver import NashEquilibriumECOSSolver
 
 
 class my1dGridEnv(object):
 
-    def __init__(self,size=3):
+    def __init__(self,size= 4):
         self.size = size # Dimension of 1D world
         self.n_states = self.size 
         self.n_actions = 3 
-        self.epsilon = [0.5,0.25,0.25] # [0,-1,1]
+        self.epsilon = [0.2,0.3,0.5] # [0,-1,1]
         self.action_space = [0,-1,1]
         self.c = 1 # proportion of the density of other population
         #self.T = 0.2
@@ -110,40 +111,45 @@ class my1dGridEnv(object):
         
 
 
-    def solve_stage_game(self,payoff_mat_1,payoff_mat_2):
-            # Zero sum case solver to get stage nash eq by lemke-Howson
+    # def solve_stage_game(self,payoff_mat_1,payoff_mat_2):
+    #         # Zero sum case solver to get stage nash eq by lemke-Howson
 
-            dim = payoff_mat_1.shape[0]
-            final_eq = None
-            # To handle the problem that sometimes Lemke-Howson implementation will give 
-            # wrong returned NE shapes or NAN in value, use different initial_dropped_label value 
-            # to find a valid one. 
-            eq_enumeration = []
-            for l in range(0, sum(payoff_mat_1.shape) - 1):
-                # Lemke Howson can not solve degenerate matrix.
-                # eq = rps.lemke_howson(initial_dropped_label=l) # The initial_dropped_label is an integer between 0 and sum(A.shape) - 1
+    #         dim = payoff_mat_1.shape[0]
+    #         final_eq = None
+    #         # To handle the problem that sometimes Lemke-Howson implementation will give 
+    #         # wrong returned NE shapes or NAN in value, use different initial_dropped_label value 
+    #         # to find a valid one. 
+    #         eq_enumeration = []
+    #         for l in range(0, sum(payoff_mat_1.shape) - 1):
+    #             # Lemke Howson can not solve degenerate matrix.
+    #             # eq = rps.lemke_howson(initial_dropped_label=l) # The initial_dropped_label is an integer between 0 and sum(A.shape) - 1
 
-                # Lexicographic Lemke Howson can solve degenerate matrix: https://github.com/newaijj/Nashpy/blob/ffea3522706ad51f712d42023d41683c8fa740e6/tests/unit/test_lemke_howson_lex.py#L9 
+    #             # Lexicographic Lemke Howson can solve degenerate matrix: https://github.com/newaijj/Nashpy/blob/ffea3522706ad51f712d42023d41683c8fa740e6/tests/unit/test_lemke_howson_lex.py#L9 
                 
-                try:
-                    eq = lemke_howson_lex(payoff_mat_1, payoff_mat_2, initial_dropped_label=l)
-                except ValueError as e:
-                    if str(e) == "could not find dropped label":
-                        # Skip to next label
-                        print("Skipping label, no dropped label found")
-                        continue
-                    elif "pivot" in str(e):
-                        continue
-                else:   
-                    if eq[0].shape[0] ==  dim and eq[1].shape[0] == dim and not np.isnan(eq[0]).any() and not np.isnan(eq[1]).any():
-                        # valid shape and valid value (not nan)
-                        return eq
-                        #eq_enumeration.append(eq)
-            final_eq = eq_enumeration[rnd.randrange(len(eq_enumeration))]
-            #print(final_eq)
-            if final_eq is None:
-                raise ValueError('No valid Nash equilibrium is found!')
-            return final_eq
+    #             try:
+    #                 eq = lemke_howson_lex(payoff_mat_1, payoff_mat_2, initial_dropped_label=l)
+    #             except ValueError as e:
+    #                 if str(e) == "could not find dropped label":
+    #                     # Skip to next label
+    #                     print("Skipping label, no dropped label found")
+    #                     continue
+    #                 elif "pivot" in str(e):
+    #                     continue
+    #             else:   
+    #                 if eq[0].shape[0] ==  dim and eq[1].shape[0] == dim and not np.isnan(eq[0]).any() and not np.isnan(eq[1]).any():
+    #                     # valid shape and valid value (not nan)
+    #                     return eq
+    #                     #eq_enumeration.append(eq)
+    #         final_eq = eq_enumeration[rnd.randrange(len(eq_enumeration))]
+    #         #print(final_eq)
+    #         if final_eq is None:
+    #             raise ValueError('No valid Nash equilibrium is found!')
+    #         return final_eq
+
+    def solve_stage_game(self,payoff_mat_1,payoff_mat_2):
+        pi_1 = NashEquilibriumECOSSolver(payoff_mat_1)[0]
+        pi_2 = NashEquilibriumECOSSolver(payoff_mat_2)[0]
+        return pi_1,pi_2
             
             # game = nash.Game(payoff_mat_1, payoff_mat_2)
 
