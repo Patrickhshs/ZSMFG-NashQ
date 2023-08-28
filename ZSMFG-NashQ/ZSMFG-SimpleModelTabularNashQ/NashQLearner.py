@@ -164,7 +164,7 @@ class NashQPlayer():
                 self.lr = self.lr_func(i)
                 # Monte Carlo T/F
                 for i_mu in range(self.Q_1.n_states):
-                    print("i_mu = {}\n".format(i_mu))
+                    #print("i_mu = {}\n".format(i_mu))
                     
                     mu_1 = self.Q_1.states[self.Q_1.n_states-1-i_mu] # initial predator starts from left
                     mu_2 = self.Q_2.states[i_mu] # preyer starts from the right
