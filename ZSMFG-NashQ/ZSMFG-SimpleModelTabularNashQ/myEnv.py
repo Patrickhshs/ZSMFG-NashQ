@@ -103,7 +103,11 @@ class my1dGridEnv(object):
 
     def get_next_mu(self,mu,strategy):
         transi_mat,epi_mat = self.cal_transition_matrix(strategy)
-        P = transi_mat@epi_mat
+        P = np.dot(transi_mat,epi_mat)
+        #print(P)
+        # print(np.sum(P,axis=0))
+        # print(np.sum(P,axis=1))
+
 
         return P@mu.T
 

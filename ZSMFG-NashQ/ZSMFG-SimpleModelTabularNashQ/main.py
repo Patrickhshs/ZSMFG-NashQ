@@ -9,8 +9,8 @@ table = myQTable()
 
 if __name__ == '__main__':
     
-    Players = NashQPlayer(env,Q_1_table=table,Q_2_table=table,MonteCarlo=True,iterations=100,
-                        iter_save=25000,discount_factor=0.9)
+    Players = NashQPlayer(env,Q_1_table=table,Q_2_table=table,MonteCarlo=False,iterations=1000,
+                        iter_save=1000,discount_factor=0.9)
     #print(Players.Q_1.controls[0])
     Q_predator, Q_preyer = Players.training()
     
