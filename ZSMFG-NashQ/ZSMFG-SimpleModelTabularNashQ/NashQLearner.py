@@ -67,8 +67,8 @@ class NashQPlayer():
         current_states = [self.Q_1.states[-1],self.Q_2.states[0]]
         for i in tqdm(range(1,self.max_itrs+1)):
             if self.MonteCarlo:
-                print(current_states)
-                self.epsilon = self.adjust_eps(0.9,0.05,i)
+                #print(current_states)
+                self.epsilon = self.adjust_eps(0.9,0.01,i)
                 if self.decision_strategy == "random":
                     i_alpha_1 = random.randint(0,self.Q_1.n_controls-1)
                     i_alpha_2 = random.randint(0,self.Q_2.n_controls-1)
@@ -76,8 +76,8 @@ class NashQPlayer():
                 if self.decision_strategy == "epsilon-greedy":
                     random_number = random.uniform(0,1)
                     if random_number >=self.epsilon:
-                        strategies = self.env.solve_stage_game(self.Q_1.Q_table[self.Q_1.get_state_index(current_states[0])],
-                        self.Q_2.Q_table[self.Q_2.get_state_index(current_states[1])])
+                        strategies = self.env.solve_stage_game(self.Q_1.Q_table[self.Q_1.proj_W_index(current_states[0])],
+                        self.Q_2.Q_table[self.Q_2.proj_W_index(current_states[1])])
                         
                         i_alpha_1 = random.choices(list(range(len(strategies[0]))),weights = strategies[0],k=1)[0]
                         i_alpha_2 = random.choices(list(range(len(strategies[1]))), weights = strategies[1],k=1)[0]
@@ -97,12 +97,12 @@ class NashQPlayer():
 
 
                 # print(i_alpha_1,i_alpha_2)
-                # print(self.Q_1.controls[i_alpha_1],self.Q_2.controls[i_alpha_2])
-                i_alpha_1 = 0
-                i_alpha_2 = 0
+                print("controls:",self.Q_1.controls[i_alpha_1],self.Q_2.controls[i_alpha_2])
+                # i_alpha_1 = 0
+                # i_alpha_2 = -1
                 next_mu_1 = self.env.get_next_mu(current_states[0],self.Q_1.controls[i_alpha_1])
                 next_mu_2 = self.env.get_next_mu(current_states[1],self.Q_2.controls[i_alpha_2])
-                #print(next_mu_1,next_mu_2)
+                print("mu next: ",next_mu_1,next_mu_2)
                 
 
                 i_mu_1_next = self.Q_1.proj_W_index(next_mu_1) # find its most nearest mu
@@ -117,22 +117,22 @@ class NashQPlayer():
                 Q_2_old = self.Q_2.Q_table.copy()
                 
                 # lr as a function of t
-                self.lr_Q_1 = self.lr_func(self.Q_1_visited_times[self.Q_1.get_state_index(current_states[0])][i_alpha_1][i_alpha_2])
-                self.lr_Q_2 = self.lr_func(self.Q_2_visited_times[self.Q_2.get_state_index(current_states[1])][i_alpha_1][i_alpha_2])
+                self.lr_Q_1 = self.lr_func(self.Q_1_visited_times[self.Q_1.proj_W_index(current_states[0])][i_alpha_1][i_alpha_2])
+                self.lr_Q_2 = self.lr_func(self.Q_2_visited_times[self.Q_2.proj_W_index(current_states[1])][i_alpha_1][i_alpha_2])
 
                 # self.lr_Q_1 = 1/i
                 # self.lr_Q_2 = 1/i
 
-                self.Q_1_visited_times[self.Q_1.get_state_index(current_states[0])][i_alpha_1][i_alpha_2] += 1
-                self.Q_2_visited_times[self.Q_2.get_state_index(current_states[1])][i_alpha_1][i_alpha_2] += 1
+                self.Q_1_visited_times[self.Q_1.proj_W_index(current_states[0])][i_alpha_1][i_alpha_2] += 1
+                self.Q_2_visited_times[self.Q_2.proj_W_index(current_states[1])][i_alpha_1][i_alpha_2] += 1
 
-                self.Q_1.Q_table[self.Q_1.get_state_index(current_states[0])][i_alpha_1][i_alpha_2] = ((1-self.lr_Q_1) * self.Q_1.Q_table[self.Q_1.get_state_index(current_states[0])][i_alpha_1][i_alpha_2]
+                self.Q_1.Q_table[self.Q_1.proj_W_index(current_states[0])][i_alpha_1][i_alpha_2] = ((1-self.lr_Q_1) * self.Q_1.Q_table[self.Q_1.proj_W_index(current_states[0])][i_alpha_1][i_alpha_2]
                     + self.lr_Q_1*(r_next_1 + self.disct_fct * np.dot(np.dot(pi_1, self.Q_1.Q_table[i_mu_1_next]),pi_2)))
 
-                self.Q_2.Q_table[self.Q_2.get_state_index(current_states[1])][i_alpha_1][i_alpha_2] = ((1-self.lr_Q_2) * self.Q_2.Q_table[self.Q_2.get_state_index(current_states[1])][i_alpha_1][i_alpha_2]
+                self.Q_2.Q_table[self.Q_2.proj_W_index(current_states[1])][i_alpha_1][i_alpha_2] = ((1-self.lr_Q_2) * self.Q_2.Q_table[self.Q_2.proj_W_index(current_states[1])][i_alpha_1][i_alpha_2]
                     + self.lr_Q_2*(r_next_2 + self.disct_fct * np.dot(np.dot(pi_1, self.Q_2.Q_table[i_mu_2_next]),pi_2)))
 
-                current_states = [self.Q_1.states[i_mu_1_next],self.Q_2.states[i_mu_2_next]]
+                current_states = [next_mu_1,next_mu_2]
 
                 
                 

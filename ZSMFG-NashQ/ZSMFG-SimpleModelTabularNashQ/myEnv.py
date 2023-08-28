@@ -8,7 +8,7 @@ from ecos_solver import NashEquilibriumECOSSolver
 
 class my1dGridEnv(object):
 
-    def __init__(self,size= 4):
+    def __init__(self,size= 3):
         self.size = size # Dimension of 1D world
         self.n_states = self.size 
         self.n_actions = 3 
@@ -31,6 +31,7 @@ class my1dGridEnv(object):
         epsilon_matrix = np.zeros((self.n_states,self.n_states))
         self.epsilon = np.random.rand(3)
         self.epsilon /=np.sum(self.epsilon)
+        #print(self.epsilon)
         for i in range(self.n_states):
             if i==0:
                 trans_matrix[self.get_index(i),self.get_index(i)] = pi[0]
@@ -104,7 +105,7 @@ class my1dGridEnv(object):
         transi_mat,epi_mat = self.cal_transition_matrix(strategy)
         P = transi_mat@epi_mat
 
-        return P@mu
+        return P@mu.T
 
 
 
