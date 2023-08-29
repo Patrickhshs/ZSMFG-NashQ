@@ -190,10 +190,10 @@ class NashQPlayer():
                             # print("mu = {},\t mu_next = {}, \t mu_next_proj = {}".format(mu_1, next_mu_1,self.Q_1.states[i_mu_1_next]))
                             
                             # print(Q_old[i_mu_1_next][i_alpha_1][i_alpha_2])
-                            self.Q_1.Q_table[self.Q_1.get_state_index(mu_1)][i_alpha_1][i_alpha_2] = ((1-self.lr)*self.Q_1.Q_table[self.Q_1.get_state_index(current_states[0])][i_alpha_1][i_alpha_2]
+                            self.Q_1.Q_table[self.Q_1.get_state_index(mu_1)][i_alpha_1][i_alpha_2] = ((1-self.lr)*self.Q_1.Q_table[self.Q_1.get_state_index(mu_1)][i_alpha_1][i_alpha_2]
                                 + self.lr*(r_next_1 + self.disct_fct * np.dot(np.dot(pi_1, self.Q_1.Q_table[i_mu_1_next]),pi_2)))
 
-                            self.Q_2.Q_table[self.Q_2.get_state_index(mu_2)][i_alpha_1][i_alpha_2] = ((1-self.lr)*self.Q_2.Q_table[self.Q_2.get_state_index(current_states[1])][i_alpha_1][i_alpha_2]
+                            self.Q_2.Q_table[self.Q_2.get_state_index(mu_2)][i_alpha_1][i_alpha_2] = ((1-self.lr)*self.Q_2.Q_table[self.Q_2.get_state_index(mu_2)][i_alpha_1][i_alpha_2]
                                 + self.lr*(r_next_2 + self.disct_fct * np.dot(np.dot(pi_1, self.Q_2.Q_table[i_mu_2_next]),pi_2)))
                             
                             
