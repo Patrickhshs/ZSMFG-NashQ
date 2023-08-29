@@ -14,7 +14,7 @@ from copy import copy
 
 class NashDQN(object):
 
-    def __init__(self,lr,gamma,batch_size,env,replay_buffer=ReplayBuffer,max_iteration=1000,state_dim = 4,save_rate = 100,epsilon=0.5,n_steps_ctrl=10,max_episode=100,baseNet=ValueNet):
+    def __init__(self,lr,action_dim,gamma,batch_size,env,replay_buffer=ReplayBuffer,max_iteration=1000,state_dim = 4,save_rate = 100,epsilon=0.5,n_steps_ctrl=10,max_episode=100,baseNet=ValueNet):
 
         self.lr = lr
         self.gamma = gamma
@@ -30,7 +30,8 @@ class NashDQN(object):
         self.max_iteration = max_iteration
         self.training_step = 0
         self.save_rate = save_rate
-        self.action_space = self.init_action_space()
+        self.action_dim = action_dim
+        #self.action_space = self.init_action_space()
         #self.payoff_mat_1,self.payoff_mat_2 = self.generate_payoff_matrix()
         self.optimizer_1 = torch.optim.AdamW(self.Q_1.parameters(),lr=self.lr)
         self.optimizer_2 = torch.optim.AdamW(self.Q_2.parameters(),lr=self.lr)
@@ -84,11 +85,13 @@ class NashDQN(object):
                 target_y_1 = torch.zeros((self.batch_size,1))
                 target_y_2 = torch.zeros((self.batch_size,1))
 
-                for i in range(self.batch_size):
-                    payoff_mat_1,payoff_mat_2 = self.generate_payoff_matrix(batch_new_states[i][0],batch_new_states[i][1])
-                    pi_1,pi_2 = self.env.solve_stage_game(payoff_mat_1,payoff_mat_2)
-                    target_y_1[i] = batch_rewards[i] + self.gamma*torch.dot(torch.dot(pi_1,payoff_mat_1),pi_2)
-                    target_y_2[i] = batch_rewards[i] + self.gamma*torch.dot(torch.dot(pi_1,payoff_mat_2),pi_2)
+                # for i in range(self.batch_size):
+                #     payoff_mat_1,payoff_mat_2 = self.generate_payoff_matrix(batch_new_states[i][0],batch_new_states[i][1])
+                #     pi_1,pi_2 = self.env.solve_stage_game(payoff_mat_1,payoff_mat_2)
+                #     target_y_1[i] = batch_rewards[i] + self.gamma*torch.dot(torch.dot(pi_1,payoff_mat_1),pi_2)
+                #     target_y_2[i] = batch_rewards[i] + self.gamma*torch.dot(torch.dot(pi_1,payoff_mat_2),pi_2)
+
+                
                 
                 loss_1 = nn.MSELoss(target_y_1,self.Q_1(batch_state,batch_actions[0],batch_actions[1]))
                 loss_2 = nn.MSELoss(target_y_2,self.Q_2(batch_state,batch_actions[0],batch_actions[1]))
@@ -111,6 +114,9 @@ class NashDQN(object):
         # Target networks are initilized withthe same params
         torch.save(self.Q_1.state_dict(),model_path +"/player"+1+ "/nn_params.pt")
         torch.save(self.Q_2.state_dict(),model_path +"/player"+2+ "/nn_params.pt")
+
+    def compute_nash(self,q_values):
+        q_tables = q_values.reshape(-1,self.)
 
 
 
