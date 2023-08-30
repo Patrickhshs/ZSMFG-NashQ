@@ -12,7 +12,7 @@ from tableMFCQ import MyTable
 
 
 #### LOAD PREVIOUS
-npzfile = np.load("Tabular Q-learning/test10f7a3_paramsBook_from-v3d5_10Pts_gamma0p5_envT1_cont20Pts_contT0p1_cont30pts_contT0p2/test10f7_results_iter10.npz")
+npzfile = np.load("ZSMFG-NashQ/Tabular Q-learning/test10f7a3_paramsBook_from-v3d5_10Pts_gamma0p5_envT1_cont20Pts_contT0p1_cont30pts_contT0p2/test10f_results_iter100.npz")
 Q_prev =             npzfile['Q']
 # n_states_x_prev =    npzfile['n_states_x']
 # n_steps_state_prev = npzfile['n_steps_state']

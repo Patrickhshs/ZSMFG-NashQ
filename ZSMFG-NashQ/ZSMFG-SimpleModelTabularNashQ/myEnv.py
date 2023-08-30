@@ -8,13 +8,14 @@ from ecos_solver import NashEquilibriumECOSSolver
 
 class my1dGridEnv(object):
 
-    def __init__(self,size= 3):
+    def __init__(self,size= 4):
         self.size = size # Dimension of 1D world
         self.n_states = self.size 
         self.n_actions = 3 
         self.epsilon = [0.2,0.3,0.5] # [0,-1,1]
-        self.action_space = [0,-1,1]
-        self.c = 1 # proportion of the density of other population
+        self.action_space = [-1,0,1]
+
+        self.c = 2 # proportion of the density of other population
         #self.T = 0.2
 
 

@@ -14,7 +14,7 @@ class MyTable():
         states_tmp = distributions_unnorm.copy()
         self.states = states_tmp[np.where(np.sum(states_tmp, axis=1)==self.n_steps_state)] / float(self.n_steps_state)#shape:(5456,4)
         self.n_states = np.shape(self.states)[0]
-        self.n_steps_ctrl = 1
+        self.n_steps_ctrl = 2
     
     def init_ctrl(self):
         combi_ctrl = itertools.product(np.linspace(0,1,self.n_steps_ctrl+1), repeat=self.n_states_x)#n_states_x) #cartesian product; all possible controls as functions of state_x

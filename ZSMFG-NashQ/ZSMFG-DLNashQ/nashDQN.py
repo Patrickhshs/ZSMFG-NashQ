@@ -115,8 +115,8 @@ class NashDQN(object):
         torch.save(self.Q_1.state_dict(),model_path +"/player"+1+ "/nn_params.pt")
         torch.save(self.Q_2.state_dict(),model_path +"/player"+2+ "/nn_params.pt")
 
-    def compute_nash(self,q_values):
-        q_tables = q_values.reshape(-1,self.)
+    # def compute_nash(self,q_values):
+    #     q_tables = q_values.reshape(-1,self.)
 
 
 
