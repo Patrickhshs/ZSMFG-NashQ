@@ -70,6 +70,7 @@ if __name__ == '__main__':
                 # print("i_alpha = {}\n".format(i_alpha))
                 alpha = table.controls[i_alpha]
                 mu_next, r_next = env.get_mu_and_reward(mu, alpha)#get the new mu
+                print(mu_next)
                 i_mu_next = table.proj_W_index(mu_next)#find its most nearest mu
 
                 # print("mu = {},\t mu_next = {}, \t mu_next_proj = {}".format(mu, mu_next, states[i_mu_next]))
