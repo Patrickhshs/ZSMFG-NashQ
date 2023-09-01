@@ -8,12 +8,12 @@ from ecos_solver import NashEquilibriumECOSSolver
 
 class my1dGridEnv(object):
 
-    def __init__(self,size= 4):
+    def __init__(self,size= 3):
         self.size = size # Dimension of 1D world
         self.n_states = self.size 
         self.n_actions = 3 
         self.epsilon = [0.2,0.3,0.5] # [0,-1,1]
-        self.action_space = [-1,0,1]
+        self.action_space = [0,-1,1]
 
         self.c = 2 # proportion of the density of other population
         #self.T = 0.2
@@ -24,39 +24,56 @@ class my1dGridEnv(object):
 
         return m
 
+    def get_move_prob(self,pi,epsilon,distance):
+        # Only in grid=3 case
+        if distance==0:
+            return pi[0]*epsilon[0]+pi[1]*epsilon[2]+pi[2]*epsilon[1]
+        # elif distance==-1:
+        #     return pi[0]*epsilon[1]+pi[1]*epsilon[0]+pi[2]*epsilon[2]
+        # elif distance==-2:
+        #     return pi[1]*epsilon[1]
+        # elif distance==2:
+        #     return pi[2]*epsilon[2]
+        # elif distance==1:
+        #     return pi[0]*epsilon[2]+pi[1]*epsilon[1]+pi[2]*epsilon[0]
+        # else:
+        #     return 0
+
+
+            
+
+
     # recalculate the transition_matrix because every time the agents deploys a different strategy pi
     def cal_transition_matrix(self,pi):
 
         # pi=[p_stay,p_left,p_right]
         trans_matrix = np.zeros((self.n_states,self.n_states))
-        epsilon_matrix = np.zeros((self.n_states,self.n_states))
+        #epsilon_matrix = np.zeros((self.n_states,self.n_states))
         self.epsilon = np.random.rand(3)
         self.epsilon /=np.sum(self.epsilon)
-        #print(self.epsilon)
+        # print(self.epsilon)
+        # generate epsilon_mat 
+        #prob_dest_dict=dict()
         for i in range(self.n_states):
-            if i==0:
-                trans_matrix[self.get_index(i),self.get_index(i)] = pi[0]
-                epsilon_matrix[self.get_index(i),self.get_index(i)] = self.epsilon[0]
-                trans_matrix[self.get_index(i),-1] = pi[1]
-                epsilon_matrix[self.get_index(i),-1] = self.epsilon[1]
-                trans_matrix[self.get_index(i),self.get_index(i)+1] = pi[2]
-                epsilon_matrix[self.get_index(i),self.get_index(i)+1] = self.epsilon[2]
-            elif i==self.n_states-1:
-                trans_matrix[self.get_index(i),self.get_index(i)] = pi[0]
-                epsilon_matrix[self.get_index(i),self.get_index(i)] = self.epsilon[0]
-                trans_matrix[self.get_index(i),self.get_index(i)-1] = pi[1]
-                epsilon_matrix[self.get_index(i),self.get_index(i)-1] = self.epsilon[1]
-                trans_matrix[self.get_index(i),0] = pi[2]
-                epsilon_matrix[self.get_index(i),0] = self.epsilon[2]
-            else:
-                trans_matrix[self.get_index(i),self.get_index(i)] = pi[0]
-                epsilon_matrix[self.get_index(i),self.get_index(i)] = self.epsilon[0]
-                trans_matrix[self.get_index(i),self.get_index(i)-1] = pi[1]
-                epsilon_matrix[self.get_index(i),self.get_index(i)-1] = self.epsilon[1]
-                trans_matrix[self.get_index(i),self.get_index(i)+1] = pi[2]
-                epsilon_matrix[self.get_index(i),self.get_index(i)+1] = self.epsilon[2]
-        
-        return trans_matrix, epsilon_matrix
+            for l in range(self.n_states):
+                #print(l)
+                #distance=min(l-i,self.n_states-abs(l-i))
+                if l==i:
+                    trans_matrix[l][i]=pi[l][0]*self.epsilon[0]+pi[l][1]*self.epsilon[2]+pi[l][2]*self.epsilon[1]
+                if l-i==1:
+                    trans_matrix[l][i]=pi[l][0]*self.epsilon[1]+pi[l][1]*self.epsilon[0]+pi[l][2]*self.epsilon[2]
+                if l==2 and i==0:
+                    trans_matrix[l][i]=pi[l][0]*self.epsilon[2]+pi[l][1]*self.epsilon[1]+pi[l][2]*self.epsilon[0]
+                if l==0 and i==1:
+                    trans_matrix[l][i]=pi[l][0]*self.epsilon[2]+pi[l][1]*self.epsilon[1]+pi[l][2]*self.epsilon[0]
+                if l == 0  and i==2:
+                    trans_matrix[l][i]=pi[l][0]*self.epsilon[1]+pi[l][1]*self.epsilon[0]+pi[l][2]*self.epsilon[2]
+                if l==1 and i==2:
+                    trans_matrix[l][i]=pi[l][0]*self.epsilon[2]+pi[l][1]*self.epsilon[1]+pi[l][2]*self.epsilon[0]
+
+                
+        print(trans_matrix)
+        return trans_matrix
 
 
 
@@ -103,14 +120,16 @@ class my1dGridEnv(object):
 
 
     def get_next_mu(self,mu,strategy):
-        transi_mat,epi_mat = self.cal_transition_matrix(strategy)
-        P = np.dot(transi_mat,epi_mat)
+        transi_mat= self.cal_transition_matrix(strategy)
+        print(np.sum(transi_mat,axis=1))
+
+        
         #print(P)
         # print(np.sum(P,axis=0))
         # print(np.sum(P,axis=1))
 
 
-        return P@mu.T
+        return transi_mat@mu
 
 
 

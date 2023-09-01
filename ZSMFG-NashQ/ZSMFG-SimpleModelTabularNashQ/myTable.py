@@ -8,7 +8,7 @@ class myQTable():
         def __init__(self,n_states_x= 3 ,n_steps_state= 7,history_table=None):
             self.n_states_x=n_states_x
             self.n_steps_state=n_steps_state # big N in the simplex discretization 
-            self.n_steps_ctrl = 5
+            self.n_steps_ctrl = 4
             self.history_table = history_table
 
         def init_states(self):
@@ -28,7 +28,7 @@ class myQTable():
             self.control = controls[np.where(np.sum(controls, axis=1) == self.n_steps_ctrl)] / float(self.n_steps_ctrl) # all possible combination of distributions
             combi_population_level_ctrl = itertools.product(self.control,repeat=self.n_states_x)
             self.controls = np.asarray([el for el in combi_population_level_ctrl])
-            print(self.controls.shape)
+            print(self.controls)
             # combi_ctrl = itertools.product(np.linspace(0,1,self.n_steps_ctrl+1), repeat=self.n_states_x)#n_states_x) #cartesian product; all possible controls as functions of state_x
             # self.controls = np.asarray([el for el in combi_ctrl])
             self.n_controls = np.shape(self.controls)[0]

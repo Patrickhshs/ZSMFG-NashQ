@@ -68,7 +68,7 @@ class NashQPlayer():
         for i in tqdm(range(1,self.max_itrs+1)):
             if self.MonteCarlo:
                 #print(current_states)
-                self.epsilon = self.adjust_eps(0.9,0.01,i)
+                self.epsilon = self.adjust_eps(0.9,0.05,i)
                 if self.decision_strategy == "random":
                     i_alpha_1 = random.randint(0,self.Q_1.n_controls-1)
                     i_alpha_2 = random.randint(0,self.Q_2.n_controls-1)
@@ -100,6 +100,7 @@ class NashQPlayer():
 
                 # i_alpha_1 = 0
                 # i_alpha_2 = -1
+                print(current_states)
                 next_mu_1 = self.env.get_next_mu(current_states[0],self.Q_1.controls[i_alpha_1])
                 next_mu_2 = self.env.get_next_mu(current_states[1],self.Q_2.controls[i_alpha_2])
                 print("mu next: ",next_mu_1,next_mu_2)
