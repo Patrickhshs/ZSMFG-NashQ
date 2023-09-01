@@ -100,7 +100,7 @@ class NashQPlayer():
 
                 # i_alpha_1 = 0
                 # i_alpha_2 = -1
-                print(current_states)
+                #print(current_states)
                 next_mu_1 = self.env.get_next_mu(current_states[0],self.Q_1.controls[i_alpha_1])
                 next_mu_2 = self.env.get_next_mu(current_states[1],self.Q_2.controls[i_alpha_2])
                 print("mu next: ",next_mu_1,next_mu_2)
