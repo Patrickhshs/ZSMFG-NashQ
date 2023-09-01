@@ -103,9 +103,9 @@ class NashQPlayer():
                 #print(current_states)
                 next_mu_1 = self.env.get_next_mu(current_states[0],self.Q_1.controls[i_alpha_1])
                 next_mu_2 = self.env.get_next_mu(current_states[1],self.Q_2.controls[i_alpha_2])
-                print("mu next: ",next_mu_1,next_mu_2)
+                #print("mu next: ",next_mu_1,next_mu_2)
                 #print(i_alpha_1,i_alpha_2)
-                print("controls:",self.Q_1.controls[i_alpha_1],self.Q_2.controls[i_alpha_2])
+                #print("controls:",self.Q_1.controls[i_alpha_1],self.Q_2.controls[i_alpha_2])
  
                 i_mu_1_next = self.Q_1.proj_W_index(next_mu_1) # find its most nearest mu
                 i_mu_2_next = self.Q_2.proj_W_index(next_mu_2)
@@ -142,21 +142,21 @@ class NashQPlayer():
                 
 
                 # Check covergence
-                # self.Q_1_diff_sup.append(np.max(np.abs(self.Q_1.Q_table - Q_1_old)))
-                # #
-                # print("***** sup|Q_new - Q_old| = {}".format(self.Q_1_diff_sup[-1]))
-                # self.Q_1_diff_L2.append(np.sqrt(np.sum(np.square(self.Q_1.Q_table - Q_1_old))))
-                # print("***** L2|Q_new - Q_old| = {}\n".format(self.Q_1_diff_L2[-1]))
+                self.Q_1_diff_sup.append(np.max(np.abs(self.Q_1.Q_table - Q_1_old)))
+                #
+                print("***** sup|Q_new - Q_old| = {}".format(self.Q_1_diff_sup[-1]))
+                self.Q_1_diff_L2.append(np.sqrt(np.sum(np.square(self.Q_1.Q_table - Q_1_old))))
+                print("***** L2|Q_new - Q_old| = {}\n".format(self.Q_1_diff_L2[-1]))
                 
-                # self.Q_2_diff_sup.append(np.max(np.abs(self.Q_2.Q_table - Q_2_old)))
-                # #
-                # print("***** sup|Q_new - Q_old| = {}".format(self.Q_2_diff_sup[-1]))
-                # self.Q_2_diff_L2.append(np.sqrt(np.sum(np.square(self.Q_2.Q_table - Q_2_old))))
-                # print("***** L2|Q_new - Q_old| = {}\n".format(self.Q_2_diff_L2[-1]))
-                # if (i % self.iter_save == 0):
-                #     np.savez("ZSMFG-NashQ/historyTables/Q_MC_zeros_ecos_results_iter{}".format(i), Q_1=self.Q_1.Q_table,Q_2=self.Q_2.Q_table, n_states_x=self.Q_1.n_states_x, n_steps_state=self.Q_1.n_steps_state,
-                #     n_steps_ctrl=self.Q_1.n_steps_ctrl, iters=self.max_itrs, Q_1_diff_sup=self.Q_1_diff_sup, Q_1_diff_L2=self.Q_1_diff_L2,Q_2_diff_sup=self.Q_2_diff_sup, Q_2_diff_L2=self.Q_2_diff_L2,
-                #     Q_1_visited=self.Q_1_visited_times, Q_2_visited = self.Q_2_visited_times)
+                self.Q_2_diff_sup.append(np.max(np.abs(self.Q_2.Q_table - Q_2_old)))
+                #
+                print("***** sup|Q_new - Q_old| = {}".format(self.Q_2_diff_sup[-1]))
+                self.Q_2_diff_L2.append(np.sqrt(np.sum(np.square(self.Q_2.Q_table - Q_2_old))))
+                print("***** L2|Q_new - Q_old| = {}\n".format(self.Q_2_diff_L2[-1]))
+                if (i % self.iter_save == 0):
+                    np.savez("ZSMFG-NashQ/historyTables/Q_MC_zeros_ecos_results_iter{}".format(i), Q_1=self.Q_1.Q_table,Q_2=self.Q_2.Q_table, n_states_x=self.Q_1.n_states_x, n_steps_state=self.Q_1.n_steps_state,
+                    n_steps_ctrl=self.Q_1.n_steps_ctrl, iters=self.max_itrs, Q_1_diff_sup=self.Q_1_diff_sup, Q_1_diff_L2=self.Q_1_diff_L2,Q_2_diff_sup=self.Q_2_diff_sup, Q_2_diff_L2=self.Q_2_diff_L2,
+                    Q_1_visited=self.Q_1_visited_times, Q_2_visited = self.Q_2_visited_times)
 
 
 
