@@ -6,12 +6,12 @@ import matplotlib.pyplot as plt
 
 
 #npzfile = np.load("ZSMFG-NashQ/historyTables/Q_1_and_Q_2_results_iter1000.npz")
-npzfile = np.load("ZSMFG-NashQ/historyTables/Q_noMC_zeros_ecos_results_iter100.npz")
+npzfile = np.load("ZSMFG-NashQ/historyTables/Q_MC_zeros_ecos_results_iter100000.npz")
 #Q =             npzfile['Q_1_diff_sup']
 n_states_x =    npzfile['n_states_x']
 n_steps_state = npzfile['n_steps_state']
 n_steps_ctrl =  npzfile['n_steps_ctrl']
-iters =         [i for i in range(1,101)]
+iters =         [i for i in range(1,100001)]
 Q_1_diff_sup  =    np.log(npzfile['Q_1_diff_sup'])
 Q_1_diff_L2  =    np.log(npzfile['Q_1_diff_L2'])
 Q_2_diff_sup  =    np.log(npzfile['Q_2_diff_sup'])
@@ -31,4 +31,4 @@ if __name__ == "__main__":
     plt.xlabel('iterations')
     plt.legend()
     plt.title("log-scale-plot")
-    plt.savefig("ZSMFG-NashQ/ZSMFG-SimpleModelTabularNashQ/plots/convergenceQ1_zeros_noMC_100iters_L2.pdf")
+    plt.savefig("ZSMFG-NashQ/ZSMFG-SimpleModelTabularNashQ/plots/convergenceQ1_zeros_MC_100000iters_L2.pdf")

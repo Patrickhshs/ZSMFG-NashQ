@@ -13,13 +13,13 @@ Q_2 = file["Q_2"]
 
 if __name__ == '__main__':
     
-    Players = NashQPlayer(env,Q_1_table=myQTable(),Q_2_table=myQTable(),MonteCarlo=True,iterations=50000,
-                        iter_save=25000,discount_factor=0.9)
+    Players = NashQPlayer(env,Q_1_table=myQTable(),Q_2_table=myQTable(),MonteCarlo=True,iterations=100000,
+                        iter_save=50000,discount_factor=0.9)
     #print(Players.Q_1.controls[0])
     Q_predator, Q_preyer = Players.training()
     
     # Fictisiou play
-    # approximate/learn te8 
+    # approximate/learn 
     #print(Players.recover_equilibrium_policy(100,Q_predator,Q_preyer,env))
     #policy_1,policy_2,r_1,r_2 = Players.recover_equilibrium_policy(500,Q_predator,Q_preyer,env)
     #r_1_exploitability,r_2_exploitability = compute_exploitability(500,Players,Q_predator,Q_preyer,policy_1,policy_2,env)
