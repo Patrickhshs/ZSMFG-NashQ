@@ -229,6 +229,7 @@ class NashQPlayer():
         
         total_reward_expo = []
         total_reward_fixed = []
+        
 
         
         
@@ -237,6 +238,7 @@ class NashQPlayer():
             current_states = [Q.states[-1],Q_fixed.states[0]]
         else:
             current_states = [Q.states[0],Q_fixed.states[-1]]
+        evolve_states=[current_states[0]]
         
         
         for i in tqdm(range(1,max_steps+1)):
@@ -278,7 +280,7 @@ class NashQPlayer():
                     r_next_expo, r_next_fixed = env.get_population_level_reward(Q.states[i_mu_expo_next], Q_fixed.states[i_mu_fixed_next])
                     Q.Q_table[Q.proj_W_index(current_states[0])][i_alpha_expo][i_alpha_fixed] = ((1-self.lr)*Q.Q_table[Q.proj_W_index(current_states[0])][i_alpha_expo][i_alpha_fixed]
                     + self.lr*(r_next_expo + self.disct_fct * Q.Q_table[i_mu_expo_next][i_alpha_expo][i_alpha_fixed]))
-
+                    current_states=[Q.states[i_mu_expo_next],Q_fixed.states[i_mu_fixed_next]]
                 else:
                     next_mu_expo = env.get_next_mu(current_states[0],Q.controls[i_alpha_expo])
                     next_mu_fixed = env.get_next_mu(current_states[1],Q_fixed.controls[i_alpha_fixed])
@@ -288,17 +290,17 @@ class NashQPlayer():
                     r_next_fixed, r_next_expo = env.get_population_level_reward(Q_fixed.states[i_mu_expo_next], Q.states[i_mu_fixed_next])
                     Q.Q_table[Q.proj_W_index(current_states[1])][i_alpha_expo][i_alpha_fixed] = ((1-self.lr)*Q.Q_table[Q.proj_W_index(current_states[1])][i_alpha_expo][i_alpha_fixed]
                     + self.lr*(r_next_expo + self.disct_fct * Q.Q_table[i_mu_expo_next][i_alpha_expo][i_alpha_fixed]))
-
+                    current_states=[Q.states[i_mu_expo_next],Q_fixed.states[i_mu_fixed_next]]
                 
                 #self.lr_Q_1 = sel
-                print(r_next_expo)
+                #print(r_next_expo)
                 total_reward_expo.append(r_next_expo)
                 total_reward_fixed.append(r_next_fixed)
-
+                evolve_states.append(current_states[0])
                 
-                current_states=[Q.states[i_mu_expo_next],Q_fixed.states[i_mu_fixed_next]]
+                
             
-        return total_reward_expo
+        return total_reward_expo,evolve_states
 
     
     def recover_equilibrium_policy(self,max_steps, Q_1, Q_2,env,simple_recover=True):
