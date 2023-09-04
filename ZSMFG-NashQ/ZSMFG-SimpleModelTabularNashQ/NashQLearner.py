@@ -344,7 +344,7 @@ class NashQPlayer():
                 # print(i_mu_2_next)
                 current_states = [Q_1.states[i_mu_1_next],Q_2.states[i_mu_2_next]]
                 evolve_states.append(current_states)
-                print(evolve_states)
+                #print(evolve_states)
         else:
             for i in range(Q_1.Q_table.shape[0]):
                 for l in range(Q_2.Q_table.shape[0]):
