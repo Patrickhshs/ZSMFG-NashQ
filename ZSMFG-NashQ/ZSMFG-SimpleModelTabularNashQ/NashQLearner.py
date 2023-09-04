@@ -240,10 +240,12 @@ class NashQPlayer():
         
         
         for i in tqdm(range(1,max_steps+1)):
-            if self.MonteCarlo:
                 self.epsilon = self.adjust_eps(0.9,0.05,i)
                 if Q_1_fixed:
-                    i_alpha_fixed = np.random.choice(len(pi_fixed[tuple(map(tuple,current_states.reverse()))]),p = pi_fixed[tuple(map(tuple,current_states.reverse()))])
+                    states=[]
+                    states.append(current_states[1])
+                    states.append(current_states[0])
+                    i_alpha_fixed = np.random.choice(len(pi_fixed[tuple(map(tuple,states))]),p = pi_fixed[tuple(map(tuple,states))])
                 else:
                     i_alpha_fixed = np.random.choice(len(pi_fixed[tuple(map(tuple,current_states))]),p = pi_fixed[tuple(map(tuple,current_states))])
 
@@ -289,91 +291,75 @@ class NashQPlayer():
 
                 
                 #self.lr_Q_1 = sel
-                total_reward_expo.append( r_next_expo)
+                print(r_next_expo)
+                total_reward_expo.append(r_next_expo)
                 total_reward_fixed.append(r_next_fixed)
 
                 
                 current_states=[Q.states[i_mu_expo_next],Q_fixed.states[i_mu_fixed_next]]
-                # Q_fixed.Q_table[Q_fixed.get_state_index(current_states[1])][i_alpha_1][i_alpha_fixed] = ((1-self.lr)*Q_fixed.Q_table[Q_fixed.get_state_index(current_states[1])][i_alpha_1][i_alpha_2]
-                #     + self.lr*(r_next_2 + self.disct_fct * Q_fixed.Q_table[i_mu_2_next][i_alpha_1][i_alpha_fixed]))
-            # else:
-            #     for i_mu in range(Q.n_states):
-            #         # print("i_mu = {}\n".format(i_mu))
-
-            #         mu_1 = Q.states[Q.n_states-1-i_mu] # initial predator starts from left
-            #         mu_2 = Q_fixed.states[i_mu] # preyer starts from the right
-            #         for i_alpha_1 in range(Q.n_controls):
-
-            #             for i_alpha_2 in range(Q_fixed.n_controls):
-
-            #                 # print("i_alpha = {}\n".format(i_alpha))
-            #                 alpha_1 = Q.controls[i_alpha_1]
-            #                 alpha_2 = Q_fixed.controls[i_alpha_2]
-            #                 next_mu_1 = env.get_next_mu(mu_1,alpha_1)
-            #                 next_mu_2 = env.get_next_mu(mu_2,alpha_2)
-
-                            
-            #                 i_mu_1_next = Q.proj_W_index(next_mu_1) # find its most nearest mu
-            #                 i_mu_2_next = Q_fixed.proj_W_index(next_mu_2) # find its most nearest mu
-
-            #                 r_next_1, r_next_2 = env.get_population_level_reward(Q.states[i_mu_1_next], Q_fixed.states[i_mu_2_next])
-
-
-            #                 #pi_1,pi_2 = self.env.get_nash_Q_value(self.Q_1.Q_table[i_mu_1_next],self.Q_2.Q_table[i_mu_2_next])
-            #                 # print(pi_2)
-            #                 # print("mu = {},\t mu_next = {}, \t mu_next_proj = {}".format(mu_1, next_mu_1,self.Q_1.states[i_mu_1_next]))
-                            
-            #                 # print(Q_old[i_mu_1_next][i_alpha_1][i_alpha_2])
-            #                 total_reward += r_next_1
-            #                 Q.Q_table[Q.get_state_index(current_states[0])][i_alpha_1][i_alpha_2] = ((1-self.lr)*Q.Q_table[Q.get_state_index(current_states[0])][i_alpha_1][i_alpha_2]
-            #         + self.lr*(r_next_1 + self.disct_fct * np.max(Q.Q_table[i_mu_1_next][i_alpha_1])))
-            #                 Q_fixed.Q_table[Q_fixed.get_state_index(current_states[1])][i_alpha_1][i_alpha_2] = ((1-self.lr)*Q_fixed.Q_2.Q_table[Q_fixed.get_state_index(current_states[1])][i_alpha_1][i_alpha_2]
-            #         + self.lr*(r_next_2 + self.disct_fct * np.max(Q_fixed.Q_table[i_mu_2_next][i_alpha_2])))
-                
-            #     continue
             
         return total_reward_expo
 
     
-    def recover_equilibrium_policy(self,max_steps, Q_1, Q_2,env):
+    def recover_equilibrium_policy(self,max_steps, Q_1, Q_2,env,simple_recover=True):
         # recover the whole stage policy given two Q-tables
         current_states = [Q_1.states[-1],Q_2.states[0]]
+        evolve_states = []
         r_1 = []
         r_2 = []
 
         policy_1 = dict()
         policy_2 = dict()
         # dictionary instead of list, states as keys
-        for i in tqdm(range(max_steps)):
-            #print(current_states)
-            
-            Q_1_stage_table = Q_1.Q_table[Q_1.get_state_index(current_states[0])]
-            Q_2_stage_table = Q_2.Q_table[Q_2.get_state_index(current_states[1])]
-            #print(Q_1_stage_table==Q_2_stage_table)
-            # get_nash_Q_value
-            print(current_states)
-            pi_1,pi_2 = env.solve_stage_game(Q_1_stage_table,Q_2_stage_table)
-            policy_1[tuple(map(tuple,current_states))] = pi_1
-            policy_2[tuple(map(tuple,current_states))] = pi_2
+        # replace
+        if simple_recover:
+            for i in tqdm(range(max_steps)):
+                #print(current_states)
+                current_states = []
+                Q_1_stage_table = Q_1.Q_table[Q_1.get_state_index(current_states[0])]
+                Q_2_stage_table = Q_2.Q_table[Q_2.get_state_index(current_states[1])]
+                #print(Q_1_stage_table==Q_2_stage_table)
+                # get_nash_Q_value
+                #print(current_states)
+                states=[]
+                states.append(current_states[1])
+                states.append(current_states[0])
+                pi_1,pi_2 = env.solve_stage_game(Q_1_stage_table,Q_2_stage_table)
+                policy_1[tuple(map(tuple,current_states))] = pi_1
+                policy_2[tuple(map(tuple,states))] = pi_2
 
-            i_alpha_1 = np.random.choice(len(pi_1),p=pi_1)
-            i_alpha_2 = np.random.choice(len(pi_2),p=pi_2)
-            # print(pi_1)
-            # print(pi_2)
+                i_alpha_1 = np.random.choice(len(pi_1),p=pi_1)
+                i_alpha_2 = np.random.choice(len(pi_2),p=pi_2)
+                # print(pi_1)
+                # print(pi_2)
 
-            next_mu_1 = env.get_next_mu(current_states[0],Q_1.controls[i_alpha_1])
-            next_mu_2 = env.get_next_mu(current_states[1],Q_2.controls[i_alpha_2])
-            reward_1, reward_2 = env.get_population_level_reward(next_mu_1,next_mu_2)
-            r_1.append(reward_1)
-            r_2.append(reward_2)
-            i_mu_1_next = Q_1.proj_W_index(next_mu_1) 
-            i_mu_2_next = Q_2.proj_W_index(next_mu_2)
-            # print(i_mu_1_next)
-            # print(i_mu_2_next)
-            current_states = [Q_1.states[i_mu_1_next],Q_2.states[i_mu_2_next]]
+                next_mu_1 = env.get_next_mu(current_states[0],Q_1.controls[i_alpha_1])
+                next_mu_2 = env.get_next_mu(current_states[1],Q_2.controls[i_alpha_2])
+                reward_1, reward_2 = env.get_population_level_reward(next_mu_1,next_mu_2)
+                r_1.append(reward_1)
+                r_2.append(reward_2)
+                i_mu_1_next = Q_1.proj_W_index(next_mu_1) 
+                i_mu_2_next = Q_2.proj_W_index(next_mu_2)
+                # print(i_mu_1_next)
+                # print(i_mu_2_next)
+                current_states = [Q_1.states[i_mu_1_next],Q_2.states[i_mu_2_next]]
+                evolve_states.append(current_states)
+        else:
+            for i in range(Q_1.Q_table.shape[0]):
+                for l in range(Q_2.Q_table.shape[0]):
+                    current_states=[Q_1.states[i],Q_2.states[l]]
+                    Q_1_stage_table = Q_1.Q_table[i]
+                    Q_2_stage_table = Q_2.Q_table[l]
+                    pi_1,pi_2 = env.solve_stage_game(Q_1_stage_table,Q_2_stage_table)
+                    states=[]
+                    states.append(current_states[1])
+                    states.append(current_states[0])
+                    policy_1[tuple(map(tuple,current_states))] = pi_1
+                    policy_2[tuple(map(tuple,states))] = pi_2
+                    
             
         
-        return policy_1, policy_2, r_1, r_2
+        return evolve_states,policy_1, policy_2, r_1, r_2
     
 
 
