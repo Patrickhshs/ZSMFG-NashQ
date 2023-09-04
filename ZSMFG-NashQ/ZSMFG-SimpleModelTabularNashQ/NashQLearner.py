@@ -304,7 +304,7 @@ class NashQPlayer():
     def recover_equilibrium_policy(self,max_steps, Q_1, Q_2,env,simple_recover=True):
         # recover the whole stage policy given two Q-tables
         current_states = [Q_1.states[-1],Q_2.states[0]]
-        evolve_states = []
+        evolve_states = [current_states]
         r_1 = []
         r_2 = []
 
@@ -315,7 +315,7 @@ class NashQPlayer():
         if simple_recover:
             for i in tqdm(range(max_steps)):
                 #print(current_states)
-                current_states = []
+                
                 Q_1_stage_table = Q_1.Q_table[Q_1.get_state_index(current_states[0])]
                 Q_2_stage_table = Q_2.Q_table[Q_2.get_state_index(current_states[1])]
                 #print(Q_1_stage_table==Q_2_stage_table)
@@ -344,6 +344,7 @@ class NashQPlayer():
                 # print(i_mu_2_next)
                 current_states = [Q_1.states[i_mu_1_next],Q_2.states[i_mu_2_next]]
                 evolve_states.append(current_states)
+                print(evolve_states)
         else:
             for i in range(Q_1.Q_table.shape[0]):
                 for l in range(Q_2.Q_table.shape[0]):
