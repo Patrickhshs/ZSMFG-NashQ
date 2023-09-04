@@ -42,13 +42,13 @@ class NashQPlayer():
         self.Q_2.init_ctrl()
         
 
-        self.Q_1_visited_times = np.ones((self.Q_1.n_states,self.Q_1.n_controls,self.Q_2.n_controls))
-        self.Q_2_visited_times = np.ones((self.Q_2.n_states,self.Q_1.n_controls,self.Q_2.n_controls))
+        self.Q_1_visited_times = np.ones((self.Q_1.n_states))
+        self.Q_2_visited_times = np.ones((self.Q_2.n_states))
         #print(self.Q_1_visited_times.shape)
 
     def lr_func(self,number_of_visited):
 
-        return 1 / 2*number_of_visited
+        return 1 / number_of_visited
 
     def adjust_eps(self,eps_start,eps_end,current_step):
         eps_threshold = eps_start
@@ -121,14 +121,14 @@ class NashQPlayer():
                 Q_2_old = self.Q_2.Q_table.copy()
                 
                 # lr as a function of t
-                self.lr_Q_1 = self.lr_func(self.Q_1_visited_times[self.Q_1.proj_W_index(current_states[0])][i_alpha_1][i_alpha_2])
-                self.lr_Q_2 = self.lr_func(self.Q_2_visited_times[self.Q_2.proj_W_index(current_states[1])][i_alpha_1][i_alpha_2])
+                self.lr_Q_1 = self.lr_func(self.Q_1_visited_times[self.Q_1.proj_W_index(current_states[0])])
+                self.lr_Q_2 = self.lr_func(self.Q_2_visited_times[self.Q_2.proj_W_index(current_states[1])])
 
                 # self.lr_Q_1 = 1/i
                 # self.lr_Q_2 = 1/i
 
-                self.Q_1_visited_times[self.Q_1.proj_W_index(current_states[0])][i_alpha_1][i_alpha_2] += 1
-                self.Q_2_visited_times[self.Q_2.proj_W_index(current_states[1])][i_alpha_1][i_alpha_2] += 1
+                self.Q_1_visited_times[self.Q_1.proj_W_index(current_states[0])] += 1
+                self.Q_2_visited_times[self.Q_2.proj_W_index(current_states[1])] += 1
 
                 self.Q_1.Q_table[self.Q_1.proj_W_index(current_states[0])][i_alpha_1][i_alpha_2] = ((1-self.lr_Q_1) * self.Q_1.Q_table[self.Q_1.proj_W_index(current_states[0])][i_alpha_1][i_alpha_2]
                     + self.lr_Q_1*(r_next_1 + self.disct_fct * np.dot(np.dot(pi_1, self.Q_1.Q_table[i_mu_1_next]),pi_2)))
@@ -154,7 +154,7 @@ class NashQPlayer():
                 self.Q_2_diff_L2.append(np.sqrt(np.sum(np.square(self.Q_2.Q_table - Q_2_old))))
                 print("***** L2|Q_new - Q_old| = {}\n".format(self.Q_2_diff_L2[-1]))
                 if (i % self.iter_save == 0):
-                    np.savez("ZSMFG-NashQ/historyTables/Q_MC_zeros_ecos_small_lr_results_iter{}".format(i), Q_1=self.Q_1.Q_table,Q_2=self.Q_2.Q_table, n_states_x=self.Q_1.n_states_x, n_steps_state=self.Q_1.n_steps_state,
+                    np.savez("ZSMFG-NashQ/historyTables/Q_MC_zeros_ecos_2action_results_iter{}".format(i), Q_1=self.Q_1.Q_table,Q_2=self.Q_2.Q_table, n_states_x=self.Q_1.n_states_x, n_steps_state=self.Q_1.n_steps_state,
                     n_steps_ctrl=self.Q_1.n_steps_ctrl, iters=self.max_itrs, Q_1_diff_sup=self.Q_1_diff_sup, Q_1_diff_L2=self.Q_1_diff_L2,Q_2_diff_sup=self.Q_2_diff_sup, Q_2_diff_L2=self.Q_2_diff_L2,
                     Q_1_visited=self.Q_1_visited_times, Q_2_visited = self.Q_2_visited_times)
 
@@ -226,103 +226,119 @@ class NashQPlayer():
 
     def value_iterations(self,Q,Q_fixed,pi_fixed,env,max_steps,Q_1_fixed=False):
         
-        total_reward_1 = 0
-        total_reward_2 = 0
+        total_reward_expo = []
+        total_reward_fixed = []
 
         
         
         #current_state = [self.Q_1.states[random.randint(self.Q_1.n_states)],self.Q_2.states[random.randint(self.Q_2.n_states)]]
-        current_states = [Q.states[-1],Q_fixed.states[0]]
+        if Q_1_fixed:
+            current_states = [Q.states[-1],Q_fixed.states[0]]
+        else:
+            current_states = [Q.states[0],Q_fixed.states[-1]]
         
         
         for i in tqdm(range(1,max_steps+1)):
             if self.MonteCarlo:
                 self.epsilon = self.adjust_eps(0.9,0.05,i)
-                i_alpha_fixed = np.random.choice(len(pi_fixed[tuple(map(tuple,current_states))]),p = pi_fixed[tuple(map(tuple,current_states))])
+                if Q_1_fixed:
+                    i_alpha_fixed = np.random.choice(len(pi_fixed[tuple(map(tuple,current_states.reverse()))]),p = pi_fixed[tuple(map(tuple,current_states.reverse()))])
+                else:
+                    i_alpha_fixed = np.random.choice(len(pi_fixed[tuple(map(tuple,current_states))]),p = pi_fixed[tuple(map(tuple,current_states))])
+
                 if self.decision_strategy == "random":
-                    i_alpha_1 = self.table.controls[random.randint(0,Q.n_controls-1)]
+                    i_alpha_expo = self.table.controls[random.randint(0,Q.n_controls-1)]
 
                 if self.decision_strategy == "epsilon-greedy":
                     random_number = random.uniform(0,1)
                     if random_number >=self.epsilon:
 
-                        i_alpha_1 = np.argmax(Q.Q_table[Q.get_state_index(current_states[0])][i_alpha_2])
+                        i_alpha_expo = np.argmax(Q.Q_table[Q.get_state_index(current_states[0])][i_alpha_fixed])
 
 
                     else:
-                        i_alpha_1 = random.randint(0,Q_fixed.n_controls-1)
+                        i_alpha_expo = random.randint(0,Q_fixed.n_controls-1)
 
                 if self.decision_strategy == "greedy":
 
-                    i_alpha_1 = np.argmax(Q.Q_table[Q.get_state_index(current_states[0])][i_alpha_fixed])
+                    i_alpha_expo = np.argmax(Q.Q_table[Q.get_state_index(current_states[0])][i_alpha_fixed])
 
 
-                next_mu_1 = env.get_next_mu(current_states[0],Q.controls[i_alpha_1])
-                next_mu_2 = env.get_next_mu(current_states[1],Q_fixed.controls[i_alpha_fixed])
 
-                i_mu_1_next = Q.proj_W_index(next_mu_1) # find its most nearest mu
-                i_mu_2_next = Q_fixed.proj_W_index(next_mu_2)
                 if not Q_1_fixed:
+                    next_mu_expo = env.get_next_mu(current_states[0],Q.controls[i_alpha_expo])
+                    next_mu_fixed = env.get_next_mu(current_states[1],Q_fixed.controls[i_alpha_fixed])
 
-                    r_next_expo, r_next_fixed = env.get_population_level_reward(Q.states[i_mu_1_next], Q_fixed.states[i_mu_2_next])
+                    i_mu_expo_next = Q.proj_W_index(next_mu_expo) # find its most nearest mu
+                    i_mu_fixed_next = Q_fixed.proj_W_index(next_mu_fixed)
+
+                    r_next_expo, r_next_fixed = env.get_population_level_reward(Q.states[i_mu_expo_next], Q_fixed.states[i_mu_fixed_next])
+                    Q.Q_table[Q.proj_W_index(current_states[0])][i_alpha_expo][i_alpha_fixed] = ((1-self.lr)*Q.Q_table[Q.proj_W_index(current_states[0])][i_alpha_expo][i_alpha_fixed]
+                    + self.lr*(r_next_expo + self.disct_fct * Q.Q_table[i_mu_expo_next][i_alpha_expo][i_alpha_fixed]))
 
                 else:
-                    r_next_fixed, r_next_expo = env.get_population_level_reward(Q_fixed.states[i_mu_1_next], Q.states[i_mu_2_next])
+                    next_mu_expo = env.get_next_mu(current_states[0],Q.controls[i_alpha_expo])
+                    next_mu_fixed = env.get_next_mu(current_states[1],Q_fixed.controls[i_alpha_fixed])
+
+                    i_mu_expo_next = Q.proj_W_index(next_mu_expo) # find its most nearest mu
+                    i_mu_fixed_next = Q_fixed.proj_W_index(next_mu_fixed)
+                    r_next_fixed, r_next_expo = env.get_population_level_reward(Q_fixed.states[i_mu_expo_next], Q.states[i_mu_fixed_next])
+                    Q.Q_table[Q.proj_W_index(current_states[1])][i_alpha_expo][i_alpha_fixed] = ((1-self.lr)*Q.Q_table[Q.proj_W_index(current_states[1])][i_alpha_expo][i_alpha_fixed]
+                    + self.lr*(r_next_expo + self.disct_fct * Q.Q_table[i_mu_expo_next][i_alpha_expo][i_alpha_fixed]))
 
                 
                 #self.lr_Q_1 = sel
-                total_reward_1 += r_next_1
-                total_reward_2 += r_next_2
+                total_reward_expo.append( r_next_expo)
+                total_reward_fixed.append(r_next_fixed)
 
-                Q.Q_table[Q.get_state_index(current_states[0])][i_alpha_1][i_alpha_fixed] = ((1-self.lr)*Q.Q_table[Q.get_state_index(current_states[0])][i_alpha_1][i_alpha_2]
-                    + self.lr*(r_next_1 + self.disct_fct * Q.Q_table[i_mu_1_next][i_alpha_1][i_alpha_fixed]))
-
-                Q_fixed.Q_table[Q_fixed.get_state_index(current_states[1])][i_alpha_1][i_alpha_fixed] = ((1-self.lr)*Q_fixed.Q_table[Q_fixed.get_state_index(current_states[1])][i_alpha_1][i_alpha_2]
-                    + self.lr*(r_next_2 + self.disct_fct * Q_fixed.Q_table[i_mu_2_next][i_alpha_1][i_alpha_fixed]))
-            else:
-                for i_mu in range(Q.n_states):
-                    # print("i_mu = {}\n".format(i_mu))
-
-                    mu_1 = Q.states[Q.n_states-1-i_mu] # initial predator starts from left
-                    mu_2 = Q_fixed.states[i_mu] # preyer starts from the right
-                    for i_alpha_1 in range(Q.n_controls):
-
-                        for i_alpha_2 in range(Q_fixed.n_controls):
-
-                            # print("i_alpha = {}\n".format(i_alpha))
-                            alpha_1 = Q.controls[i_alpha_1]
-                            alpha_2 = Q_fixed.controls[i_alpha_2]
-                            next_mu_1 = env.get_next_mu(mu_1,alpha_1)
-                            next_mu_2 = env.get_next_mu(mu_2,alpha_2)
-
-                            
-                            i_mu_1_next = Q.proj_W_index(next_mu_1) # find its most nearest mu
-                            i_mu_2_next = Q_fixed.proj_W_index(next_mu_2) # find its most nearest mu
-
-                            r_next_1, r_next_2 = env.get_population_level_reward(Q.states[i_mu_1_next], Q_fixed.states[i_mu_2_next])
-
-
-                            #pi_1,pi_2 = self.env.get_nash_Q_value(self.Q_1.Q_table[i_mu_1_next],self.Q_2.Q_table[i_mu_2_next])
-                            # print(pi_2)
-                            # print("mu = {},\t mu_next = {}, \t mu_next_proj = {}".format(mu_1, next_mu_1,self.Q_1.states[i_mu_1_next]))
-                            
-                            # print(Q_old[i_mu_1_next][i_alpha_1][i_alpha_2])
-                            total_reward += r_next_1
-                            Q.Q_table[Q.get_state_index(current_states[0])][i_alpha_1][i_alpha_2] = ((1-self.lr)*Q.Q_table[Q.get_state_index(current_states[0])][i_alpha_1][i_alpha_2]
-                    + self.lr*(r_next_1 + self.disct_fct * np.max(Q.Q_table[i_mu_1_next][i_alpha_1])))
-                            Q_fixed.Q_table[Q_fixed.get_state_index(current_states[1])][i_alpha_1][i_alpha_2] = ((1-self.lr)*Q_fixed.Q_2.Q_table[Q_fixed.get_state_index(current_states[1])][i_alpha_1][i_alpha_2]
-                    + self.lr*(r_next_2 + self.disct_fct * np.max(Q_fixed.Q_table[i_mu_2_next][i_alpha_2])))
                 
-                continue
-            current_states = [self.Q_1.states[i_mu_1_next],self.Q_2.states[i_mu_2_next]]
-            return total_reward_expo, total_reward_fixed
+                current_states=[Q.states[i_mu_expo_next],Q_fixed.states[i_mu_fixed_next]]
+                # Q_fixed.Q_table[Q_fixed.get_state_index(current_states[1])][i_alpha_1][i_alpha_fixed] = ((1-self.lr)*Q_fixed.Q_table[Q_fixed.get_state_index(current_states[1])][i_alpha_1][i_alpha_2]
+                #     + self.lr*(r_next_2 + self.disct_fct * Q_fixed.Q_table[i_mu_2_next][i_alpha_1][i_alpha_fixed]))
+            # else:
+            #     for i_mu in range(Q.n_states):
+            #         # print("i_mu = {}\n".format(i_mu))
+
+            #         mu_1 = Q.states[Q.n_states-1-i_mu] # initial predator starts from left
+            #         mu_2 = Q_fixed.states[i_mu] # preyer starts from the right
+            #         for i_alpha_1 in range(Q.n_controls):
+
+            #             for i_alpha_2 in range(Q_fixed.n_controls):
+
+            #                 # print("i_alpha = {}\n".format(i_alpha))
+            #                 alpha_1 = Q.controls[i_alpha_1]
+            #                 alpha_2 = Q_fixed.controls[i_alpha_2]
+            #                 next_mu_1 = env.get_next_mu(mu_1,alpha_1)
+            #                 next_mu_2 = env.get_next_mu(mu_2,alpha_2)
+
+                            
+            #                 i_mu_1_next = Q.proj_W_index(next_mu_1) # find its most nearest mu
+            #                 i_mu_2_next = Q_fixed.proj_W_index(next_mu_2) # find its most nearest mu
+
+            #                 r_next_1, r_next_2 = env.get_population_level_reward(Q.states[i_mu_1_next], Q_fixed.states[i_mu_2_next])
+
+
+            #                 #pi_1,pi_2 = self.env.get_nash_Q_value(self.Q_1.Q_table[i_mu_1_next],self.Q_2.Q_table[i_mu_2_next])
+            #                 # print(pi_2)
+            #                 # print("mu = {},\t mu_next = {}, \t mu_next_proj = {}".format(mu_1, next_mu_1,self.Q_1.states[i_mu_1_next]))
+                            
+            #                 # print(Q_old[i_mu_1_next][i_alpha_1][i_alpha_2])
+            #                 total_reward += r_next_1
+            #                 Q.Q_table[Q.get_state_index(current_states[0])][i_alpha_1][i_alpha_2] = ((1-self.lr)*Q.Q_table[Q.get_state_index(current_states[0])][i_alpha_1][i_alpha_2]
+            #         + self.lr*(r_next_1 + self.disct_fct * np.max(Q.Q_table[i_mu_1_next][i_alpha_1])))
+            #                 Q_fixed.Q_table[Q_fixed.get_state_index(current_states[1])][i_alpha_1][i_alpha_2] = ((1-self.lr)*Q_fixed.Q_2.Q_table[Q_fixed.get_state_index(current_states[1])][i_alpha_1][i_alpha_2]
+            #         + self.lr*(r_next_2 + self.disct_fct * np.max(Q_fixed.Q_table[i_mu_2_next][i_alpha_2])))
+                
+            #     continue
+            
+        return total_reward_expo
 
     
     def recover_equilibrium_policy(self,max_steps, Q_1, Q_2,env):
         # recover the whole stage policy given two Q-tables
         current_states = [Q_1.states[-1],Q_2.states[0]]
-        r_1 = 0
-        r_2 = 0
+        r_1 = []
+        r_2 = []
 
         policy_1 = dict()
         policy_2 = dict()
@@ -347,8 +363,8 @@ class NashQPlayer():
             next_mu_1 = env.get_next_mu(current_states[0],Q_1.controls[i_alpha_1])
             next_mu_2 = env.get_next_mu(current_states[1],Q_2.controls[i_alpha_2])
             reward_1, reward_2 = env.get_population_level_reward(next_mu_1,next_mu_2)
-            r_1 += reward_1
-            r_2 += reward_2
+            r_1.append(reward_1)
+            r_2.append(reward_2)
             i_mu_1_next = Q_1.proj_W_index(next_mu_1) 
             i_mu_2_next = Q_2.proj_W_index(next_mu_2)
             # print(i_mu_1_next)
