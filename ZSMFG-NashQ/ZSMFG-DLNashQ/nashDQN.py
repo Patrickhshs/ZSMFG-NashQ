@@ -14,7 +14,7 @@ from copy import copy
 
 class NashDQN(object):
 
-    def __init__(self,lr,action_dim,gamma,batch_size,env,replay_buffer=ReplayBuffer,max_iteration=1000,state_dim = 4,save_rate = 100,epsilon=0.5,n_steps_ctrl=10,max_episode=100,baseNet=ValueNet):
+    def __init__(self,lr,action_dim,gamma,batch_size,env,replay_buffer=ReplayBuffer,max_iteration=1000,state_dim = 3,save_rate = 100,epsilon=0.5,n_steps_ctrl=10,max_episode=100,baseNet=ValueNet):
 
         self.lr = lr
         self.gamma = gamma
@@ -24,7 +24,7 @@ class NashDQN(object):
         self.batch_size = batch_size
         self.Q_1 = baseNet
         self.Q_2 = baseNet
-        self.current_states = [[1,0,0,0],[0,0,0,1]]
+        self.current_states = [[1,0,0],[0,0,1]]
         self.max_episode = max_episode
         self.n_steps_ctrl = n_steps_ctrl
         self.max_iteration = max_iteration
@@ -85,11 +85,11 @@ class NashDQN(object):
                 target_y_1 = torch.zeros((self.batch_size,1))
                 target_y_2 = torch.zeros((self.batch_size,1))
 
-                # for i in range(self.batch_size):
-                #     payoff_mat_1,payoff_mat_2 = self.generate_payoff_matrix(batch_new_states[i][0],batch_new_states[i][1])
-                #     pi_1,pi_2 = self.env.solve_stage_game(payoff_mat_1,payoff_mat_2)
-                #     target_y_1[i] = batch_rewards[i] + self.gamma*torch.dot(torch.dot(pi_1,payoff_mat_1),pi_2)
-                #     target_y_2[i] = batch_rewards[i] + self.gamma*torch.dot(torch.dot(pi_1,payoff_mat_2),pi_2)
+                for i in range(self.batch_size):
+                    payoff_mat_1,payoff_mat_2 = self.generate_payoff_matrix(batch_new_states[i][0],batch_new_states[i][1])
+                    pi_1,pi_2 = self.env.solve_stage_game(payoff_mat_1,payoff_mat_2)
+                    target_y_1[i] = batch_rewards[i] + self.gamma*torch.dot(torch.dot(pi_1,payoff_mat_1),pi_2)
+                    target_y_2[i] = batch_rewards[i] + self.gamma*torch.dot(torch.dot(pi_1,payoff_mat_2),pi_2)
 
                 
                 

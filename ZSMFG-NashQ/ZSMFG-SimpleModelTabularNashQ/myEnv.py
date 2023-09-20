@@ -67,30 +67,6 @@ class my1dGridEnv(object):
         trans_matrix[1][2]=pi[2][0]*self.epsilon[1]+pi[2][1]*self.epsilon[0]+pi[2][2]*self.epsilon[2]
         trans_matrix[2][2]=pi[2][0]*self.epsilon[0]+pi[2][1]*self.epsilon[2]+pi[2][2]*self.epsilon[1]
 
-        
-
-        
-
-
-        # for i in range(self.n_states):
-        #     for l in range(self.n_states):
-        #         #print(l)
-        #         #distance=min(l-i,self.n_states-abs(l-i))
-        #         if l==i:
-        #             trans_matrix[l][i]=pi[l][0]*self.epsilon[0]+pi[l][1]*self.epsilon[2]+pi[l][2]*self.epsilon[1]
-        #         if l-i==1:
-        #             trans_matrix[l][i]=pi[l][0]*self.epsilon[1]+pi[l][1]*self.epsilon[0]+pi[l][2]*self.epsilon[2]
-        #         if l==2 and i==0:
-        #             trans_matrix[l][i]=pi[l][0]*self.epsilon[2]+pi[l][1]*self.epsilon[1]+pi[l][2]*self.epsilon[0]
-        #         if l==0 and i==1:
-        #             trans_matrix[l][i]=pi[l][0]*self.epsilon[2]+pi[l][1]*self.epsilon[1]+pi[l][2]*self.epsilon[0]
-        #         if l == 0  and i==2:
-        #             trans_matrix[l][i]=pi[l][0]*self.epsilon[1]+pi[l][1]*self.epsilon[0]+pi[l][2]*self.epsilon[2]
-        #         if l==1 and i==2:
-        #             trans_matrix[l][i]=pi[l][0]*self.epsilon[2]+pi[l][1]*self.epsilon[1]+pi[l][2]*self.epsilon[0]
-
-                
-        #print(trans_matrix)
         return trans_matrix
 
 
@@ -139,13 +115,6 @@ class my1dGridEnv(object):
 
     def get_next_mu(self,mu,strategy):
         transi_mat= self.cal_transition_matrix(strategy)
-        #print(transi_mat[0][0]+transi_mat[1][0]+transi_mat[2][0])
-
-        
-        #print(P)
-        # print(np.sum(P,axis=0))
-        # print(np.sum(P,axis=1))
-
 
         return transi_mat@mu
 
