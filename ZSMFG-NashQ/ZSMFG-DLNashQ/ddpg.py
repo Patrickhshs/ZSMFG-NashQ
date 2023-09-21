@@ -89,8 +89,8 @@ class DDPG(object):
         num = str(train_step // self.save_rate)
         model_path = os.path.join("ZSMFG-NashQ/ZSMFG-Nash-DQN/ddpgModels")
         # Target networks are initilized withthe same params
-        torch.save(self.actor.state_dict(),model_path +"/player"+self.id+ "/actor_params.pt")
-        torch.save(self.critic.state_dict(),model_path +"/player"+self.id+ "/critic_params.pt")
-        torch.save(self.actor_target.state_dict(),model_path +"target/player"+self.id+ "/actor_params.pt")
-        torch.save(self.critic_target.state_dict(),model_path +"target/player"+self.id+ "/critic_params.pt")
+        torch.save(self.actor.state_dict(),model_path +"/player"+self.id+ "/actor_params_"+str(num)+".pt")
+        torch.save(self.critic.state_dict(),model_path +"/player"+self.id+ "/critic_params_"+str(num)+".pt")
+        #torch.save(self.actor_target.state_dict(),model_path +"target/player"+self.id+ "/actor_params.pt")
+        #torch.save(self.critic_target.state_dict(),model_path +"target/player"+self.id+ "/critic_params.pt")
 

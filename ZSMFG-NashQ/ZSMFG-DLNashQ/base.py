@@ -48,21 +48,38 @@ class Critic(nn.Module):
 
         return Q_value
 
-# Same like Critic but preprare for DQN
+# Same like Critic but prepare for DQN
 class ValueNet(nn.Module):
 
-    def __init__(self,n_states,n_actions,hidden_dim):
-        super(Critic,self).__init__()
-        self.layers = nn.Sequential(
-            nn.Linear(n_states+n_actions+n_actions,hidden_dim),
+    def __init__(self,n_states,n_actions):
+        super(ValueNet,self).__init__()
+        self.state_layers = nn.Sequential(
+            nn.Linear(n_states,128),
             nn.ReLU(),
-            nn.Linear(hidden_dim,hidden_dim),
+            nn.Linear(128,128),
             nn.ReLU(),
-            nn.Linear(hidden_dim,1)
+            nn.Linear(128,32)
+        )
+
+        self.action_layers = nn.Sequential(
+            nn.Linear(n_actions*n_states,64),
+            nn.ReLU(),
+            nn.Linear(64,128),
+            nn.ReLU(),
+            nn.Linear(128,32)
+        )
+        self.final_layer = nn.Sequential(
+            nn.Linear(96,48),
+            nn.ReLU(),
+            nn.Linear(48,1)
         )
 
     def forward(self,state,action_1,action_2):
-        input = torch.cat([state+action_1+action_2],1)
-        Q_value = self.layers(input)
+        state_vec = self.state_layers(state)
+        action1_vec = self.action_layers(action_1.flatten())
+        action2_vec = self.action_layers(action_2.flatten())
+        #print(action1_vec)
+        input = torch.cat([state_vec,action1_vec,action2_vec],axis=0)
+        Q_value = self.final_layer(input)
 
         return Q_value

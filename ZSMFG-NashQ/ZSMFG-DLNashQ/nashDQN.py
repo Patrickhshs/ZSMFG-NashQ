@@ -1,4 +1,5 @@
 import os
+from pickletools import long1
 import torch 
 import random as rnd
 import torch.nn as nn
@@ -8,7 +9,7 @@ from base import ValueNet
 import itertools
 import numpy as np
 from tools import ReplayBuffer
-from copy import copy
+import copy
 
 
 
@@ -18,43 +19,62 @@ class NashDQN(object):
 
         self.lr = lr
         self.gamma = gamma
-        self.replay_buffer = replay_buffer
+        self.state_dim = state_dim
+        self.action_dim = action_dim
+
+        self.replay_buffer = replay_buffer(self.state_dim,self.action_dim)
         self.env = env
         self.epsilon = epsilon
         self.batch_size = batch_size
-        self.Q_1 = baseNet
-        self.Q_2 = baseNet
+        self.Q_1 = baseNet(self.state_dim,self.action_dim)
+        self.Q_2 = baseNet(self.state_dim,self.action_dim)
         self.current_states = [[1,0,0],[0,0,1]]
         self.max_episode = max_episode
         self.n_steps_ctrl = n_steps_ctrl
         self.max_iteration = max_iteration
         self.training_step = 0
         self.save_rate = save_rate
-        self.action_dim = action_dim
-        #self.action_space = self.init_action_space()
+        self.n_steps_ctrl = 2 # Hyperparameters to discretize action space
+        
+        self.action_space = self.init_action_space()
+        print(self.action_space.shape)
+        self.n_action = self.action_space.shape[0]
+
         #self.payoff_mat_1,self.payoff_mat_2 = self.generate_payoff_matrix()
         self.optimizer_1 = torch.optim.AdamW(self.Q_1.parameters(),lr=self.lr)
         self.optimizer_2 = torch.optim.AdamW(self.Q_2.parameters(),lr=self.lr)
         # To-do:
         # set a target network to avoid overfitting
 
-        self.target_Q_1 = copy.deepcopy(baseNet)  
-        self.target_Q_2 = copy.deepcopy(baseNet)
+        self.target_Q_1 = copy.deepcopy(self.Q_1)  
+        self.target_Q_2 = copy.deepcopy(self.Q_2)
 
     
     def init_action_space(self):
-        combi_ctrl = itertools.product(np.linspace(0,self.n_steps_ctrl,self.n_steps_ctrl+1,dtype=int), repeat=3)# n_states_x) # cartesian product; all possible controls as functions of state_x
-        controls = np.asarray([el for el in combi_ctrl]) # np.linspace(0,1,n_steps_ctrl+1)
-        return controls[np.where(np.sum(controls, axis=1) == self.n_steps_ctrl)] / float(self.n_steps_ctrl)
+            combi_ctrl = itertools.product(np.linspace(0,self.n_steps_ctrl-1,self.n_steps_ctrl,dtype=int), repeat=self.action_dim)# n_states_x) # cartesian product; all possible controls as functions of state_x
+            controls = np.asarray([el for el in combi_ctrl]) # np.linspace(0,1,n_steps_ctrl+1)
+            control = controls[np.where(np.sum(controls, axis=1) == self.n_steps_ctrl)] / float(self.n_steps_ctrl) # all possible combination of distributions
+            combi_population_level_ctrl = itertools.product(control,repeat=self.state_dim)
+            #self.controls = np.asarray([el for el in combi_population_level_ctrl])
+            #print(self.controls)
+            # combi_ctrl = itertools.product(np.linspace(0,1,self.n_steps_ctrl+1), repeat=self.n_states_x)#n_states_x) #cartesian product; all possible controls as functions of state_x
+            # self.controls = np.asarray([el for el in combi_ctrl])
+            #self.n_controls = np.shape(self.controls)[0]
+            #print(self.controls)
+            #print("controls = {}".format(self.controls))
+            #print('MDP: n states = {}\nn controls = {}'.format(self.n_states, self.n_controls))        
+            #controls = np.asarray([el for el in combi_ctrl]) # np.linspace(0,1,n_steps_ctrl+1)
+            return np.asarray([el for el in combi_population_level_ctrl])
 
     def generate_payoff_matrix(self,states):
-        m,n = self.action_space.shape
-        mat_1 = np.zeros(m,n)
-        mat_2 = np.zeros(m,n)
+        m=n =self.action_space.shape[0]
+        mat_1 = np.zeros((m,n))
+        mat_2 = np.zeros((m,n))
         for i in range(m):
             for j in range(n):
-                mat_1 = self.target_Q_1(states[0],self.action_space[i],self.action_space[j])
-                mat_2 = self.target_Q_2(states[1],self.action_space[j],self.action_space[i])
+                #print(torch.LongTensor(states[0]),torch.LongTensor(self.action_space[i]),torch.LongTensor(self.action_space[j]))
+                mat_1 = int(self.target_Q_1(torch.FloatTensor(states[0]),torch.FloatTensor(self.action_space[i]),torch.FloatTensor(self.action_space[j])))
+                mat_2 = int(self.target_Q_2(torch.FloatTensor(states[1]),torch.FloatTensor(self.action_space[i]),torch.FloatTensor(self.action_space[j])))
 
         return mat_1,mat_2
 
