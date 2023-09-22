@@ -37,7 +37,6 @@ class NashDQN(object):
         self.n_steps_ctrl = 2 # Hyperparameters to discretize action space
         
         self.action_space = self.init_action_space()
-        print(self.action_space.shape)
         self.n_action = self.action_space.shape[0]
 
         #self.payoff_mat_1,self.payoff_mat_2 = self.generate_payoff_matrix()
@@ -55,16 +54,8 @@ class NashDQN(object):
             controls = np.asarray([el for el in combi_ctrl]) # np.linspace(0,1,n_steps_ctrl+1)
             control = controls[np.where(np.sum(controls, axis=1) == self.n_steps_ctrl)] / float(self.n_steps_ctrl) # all possible combination of distributions
             combi_population_level_ctrl = itertools.product(control,repeat=self.state_dim)
-            #self.controls = np.asarray([el for el in combi_population_level_ctrl])
-            #print(self.controls)
-            # combi_ctrl = itertools.product(np.linspace(0,1,self.n_steps_ctrl+1), repeat=self.n_states_x)#n_states_x) #cartesian product; all possible controls as functions of state_x
-            # self.controls = np.asarray([el for el in combi_ctrl])
-            #self.n_controls = np.shape(self.controls)[0]
-            #print(self.controls)
-            #print("controls = {}".format(self.controls))
-            #print('MDP: n states = {}\nn controls = {}'.format(self.n_states, self.n_controls))        
-            #controls = np.asarray([el for el in combi_ctrl]) # np.linspace(0,1,n_steps_ctrl+1)
             return np.asarray([el for el in combi_population_level_ctrl])
+
 
     def generate_payoff_matrix(self,states):
         m=n =self.action_space.shape[0]
@@ -73,8 +64,8 @@ class NashDQN(object):
         for i in range(m):
             for j in range(n):
                 #print(torch.LongTensor(states[0]),torch.LongTensor(self.action_space[i]),torch.LongTensor(self.action_space[j]))
-                mat_1 = int(self.target_Q_1(torch.FloatTensor(states[0]),torch.FloatTensor(self.action_space[i]),torch.FloatTensor(self.action_space[j])))
-                mat_2 = int(self.target_Q_2(torch.FloatTensor(states[1]),torch.FloatTensor(self.action_space[i]),torch.FloatTensor(self.action_space[j])))
+                mat_1[i][j] = float(self.target_Q_1(torch.unsqueeze(torch.FloatTensor(states[0]),0),torch.unsqueeze(torch.FloatTensor(self.action_space[i]),0),torch.unsqueeze(torch.FloatTensor(self.action_space[j]),0)))
+                mat_2[i][j] = float(self.target_Q_2(torch.unsqueeze(torch.FloatTensor(states[1]),0),torch.unsqueeze(torch.FloatTensor(self.action_space[i]),0),torch.unsqueeze(torch.FloatTensor(self.action_space[j]),0)))
 
         return mat_1,mat_2
 
@@ -99,23 +90,26 @@ class NashDQN(object):
                 r_next_1, r_next_2 = self.env.get_population_level_reward(next_state_1, next_state_2)
                 next_states = [next_state_1,next_state_2]
                 rewards = [r_next_1,r_next_2]
-                self.replay_buffer.store(self.current_states,[i_alpha_1,i_alpha_2],rewards,next_states)
+                self.replay_buffer.store(self.current_states,[self.action_space[i_alpha_1],self.action_space[i_alpha_2]],rewards,next_states)
                 self.current_states = next_states
                 batch_state,batch_actions,batch_rewards,batch_new_states = self.replay_buffer.sample(self.batch_size)
                 target_y_1 = torch.zeros((self.batch_size,1))
                 target_y_2 = torch.zeros((self.batch_size,1))
-
+                loss_func = torch.nn.MSELoss()
                 for i in range(self.batch_size):
-                    payoff_mat_1,payoff_mat_2 = self.generate_payoff_matrix(batch_new_states[i][0],batch_new_states[i][1])
-                    pi_1,pi_2 = self.env.solve_stage_game(payoff_mat_1,payoff_mat_2)
-                    target_y_1[i] = batch_rewards[i] + self.gamma*torch.dot(torch.dot(pi_1,payoff_mat_1),pi_2)
-                    target_y_2[i] = batch_rewards[i] + self.gamma*torch.dot(torch.dot(pi_1,payoff_mat_2),pi_2)
+                        payoff_mat_1,payoff_mat_2 = self.generate_payoff_matrix([batch_new_states[i][0],batch_new_states[i][1]])
+                        pi_1,pi_2 = self.env.solve_stage_game(payoff_mat_1,payoff_mat_2)
+                        #print((torch.FloatTensor(pi_1)@torch.FloatTensor(payoff_mat_1)@torch.FloatTensor(pi_2)))
 
-                
-                
-                loss_1 = nn.MSELoss(target_y_1,self.Q_1(batch_state,batch_actions[0],batch_actions[1]))
-                loss_2 = nn.MSELoss(target_y_2,self.Q_2(batch_state,batch_actions[0],batch_actions[1]))
-
+                        target_y_1[i] = batch_rewards[i][0] + self.gamma*(torch.FloatTensor(pi_1)@torch.FloatTensor(payoff_mat_1)@torch.FloatTensor(pi_2))
+                        target_y_2[i] = batch_rewards[i][1] + self.gamma*(torch.FloatTensor(pi_1)@torch.FloatTensor(payoff_mat_2)@torch.FloatTensor(pi_2))
+                        #print(batch_actions[i][0].shape)
+                batch_actions = batch_actions.transpose(0,1)
+                batch_state = batch_state.transpose(0,1)
+                print(self.Q_1(batch_state[0],batch_actions[0],batch_actions[1]).shape)
+                print(target_y_1.shape)
+                loss_1 = loss_func(target_y_1,self.Q_1(batch_state[0],batch_actions[0],batch_actions[1]))
+                loss_2 = loss_func(target_y_2,self.Q_2(batch_state[1],batch_actions[0],batch_actions[1]))
                 self.optimizer_1.zero_grad()
                 loss_1.backward()
                 self.optimizer_1.step()
@@ -132,11 +126,10 @@ class NashDQN(object):
         num = str(train_step // self.save_rate)
         model_path = os.path.join("ZSMFG-NashQ/ZSMFG-Nash-DQN/nashDQNmodels")
         # Target networks are initilized withthe same params
-        torch.save(self.Q_1.state_dict(),model_path +"/player"+1+ "/nn_params.pt")
-        torch.save(self.Q_2.state_dict(),model_path +"/player"+2+ "/nn_params.pt")
+        torch.save(self.Q_1.state_dict(),model_path +"/player_"+str(1)+ "/nn_params.pt")
+        torch.save(self.Q_2.state_dict(),model_path +"/player_"+str(2)+ "/nn_params.pt")
 
-    # def compute_nash(self,q_values):
-    #     q_tables = q_values.reshape(-1,self.)
+
 
 
 

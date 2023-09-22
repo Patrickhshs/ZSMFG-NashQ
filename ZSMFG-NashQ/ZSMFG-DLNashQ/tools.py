@@ -12,10 +12,10 @@ class ReplayBuffer(object):
         self.count = 0 # count order as a index
         self.size = 0
         if n_players ==2:
-            self.state_storage = np.zeros((self.max_storage,self.n_states,2))
-            self.action_storage = np.zeros((self.max_storage,self.n_actions,2))
-            self.reward_storage = np.zeros((self.max_storage,1,2))
-            self.state_next_storage = np.zeros((self.max_storage,self.n_states,2))
+            self.state_storage = np.zeros((self.max_storage,2,self.n_states)).astype(np.float32)
+            self.action_storage = np.zeros((self.max_storage,2,self.n_states,self.n_actions)).astype(np.float32)
+            self.reward_storage = np.zeros((self.max_storage,2)).astype(np.float32)
+            self.state_next_storage = np.zeros((self.max_storage,2,self.n_states)).astype(np.float32)
         else:
             self.state_storage = np.zeros((self.max_storage,self.n_states))
             self.action_storage = np.zeros((self.max_storage,self.n_actions))
@@ -25,6 +25,8 @@ class ReplayBuffer(object):
         
 
     def store(self,state,action,reward,new_state):
+        # print(len(state))
+        # print(self.state_storage[self.count].shape)
         self.state_storage[self.count] = state
         self.action_storage[self.count] = action
         self.reward_storage[self.count] = reward

@@ -76,10 +76,14 @@ class ValueNet(nn.Module):
 
     def forward(self,state,action_1,action_2):
         state_vec = self.state_layers(state)
-        action1_vec = self.action_layers(action_1.flatten())
-        action2_vec = self.action_layers(action_2.flatten())
-        #print(action1_vec)
-        input = torch.cat([state_vec,action1_vec,action2_vec],axis=0)
+        #print(action_1.flatten().shape)
+        action1_vec = self.action_layers(action_1.flatten(start_dim=1))
+        action2_vec = self.action_layers(action_2.flatten(start_dim=1))
+        # print(state_vec.shape)
+        # print(action1_vec.shape)
+        # print(action2_vec.shape)
+        input = torch.cat([state_vec,action1_vec,action2_vec],axis=1)
+        #print(input.shape)
         Q_value = self.final_layer(input)
 
         return Q_value
