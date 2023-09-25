@@ -1,8 +1,8 @@
 from random import random
 import numpy as np
-import nashpy as nash
+#import nashpy as nash
 import random as rnd
-from nashpy.algorithms.lemke_howson_lex import lemke_howson_lex
+#from nashpy.algorithms.lemke_howson_lex import lemke_howson_lex
 from ecos_solver import NashEquilibriumECOSSolver
 
 

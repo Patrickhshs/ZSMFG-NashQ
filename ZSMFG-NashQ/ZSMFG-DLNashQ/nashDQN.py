@@ -15,7 +15,9 @@ import copy
 
 class NashDQN(object):
 
-    def __init__(self,lr,action_dim,gamma,batch_size,env,replay_buffer=ReplayBuffer,max_iteration=1000,state_dim = 3,save_rate = 100,epsilon=0.5,n_steps_ctrl=10,max_episode=100,baseNet=ValueNet):
+    def __init__(self,lr,action_dim,gamma,batch_size,env,replay_buffer=ReplayBuffer,max_iteration=1000,state_dim = 3,save_rate = 100,epsilon=0.5,n_steps_ctrl=10,max_episode=100,baseNet=ValueNet,device = None):
+
+        self.device = device
 
         self.lr = lr
         self.gamma = gamma
@@ -26,8 +28,8 @@ class NashDQN(object):
         self.env = env
         self.epsilon = epsilon
         self.batch_size = batch_size
-        self.Q_1 = baseNet(self.state_dim,self.action_dim)
-        self.Q_2 = baseNet(self.state_dim,self.action_dim)
+        self.Q_1 = baseNet(self.state_dim,self.action_dim).to(self.device)
+        self.Q_2 = baseNet(self.state_dim,self.action_dim).to(self.device)
         self.current_states = [[1,0,0],[0,0,1]]
         self.max_episode = max_episode
         self.n_steps_ctrl = n_steps_ctrl
@@ -64,8 +66,8 @@ class NashDQN(object):
         for i in range(m):
             for j in range(n):
                 #print(torch.LongTensor(states[0]),torch.LongTensor(self.action_space[i]),torch.LongTensor(self.action_space[j]))
-                mat_1[i][j] = float(self.target_Q_1(torch.unsqueeze(torch.FloatTensor(states[0]),0),torch.unsqueeze(torch.FloatTensor(self.action_space[i]),0),torch.unsqueeze(torch.FloatTensor(self.action_space[j]),0)))
-                mat_2[i][j] = float(self.target_Q_2(torch.unsqueeze(torch.FloatTensor(states[1]),0),torch.unsqueeze(torch.FloatTensor(self.action_space[i]),0),torch.unsqueeze(torch.FloatTensor(self.action_space[j]),0)))
+                mat_1[i][j] = float(self.target_Q_1(torch.unsqueeze(torch.tensor(states[0],device=self.device, dtype=torch.float32),0,),torch.unsqueeze(torch.tensor(self.action_space[i],device=self.device, dtype=torch.float32),0),torch.unsqueeze(torch.tensor(self.action_space[j],device=self.device, dtype=torch.float32),0)))
+                mat_2[i][j] = float(self.target_Q_2(torch.unsqueeze(torch.tensor(states[1],device=self.device, dtype=torch.float32),0),torch.unsqueeze(torch.tensor(self.action_space[i],device=self.device, dtype=torch.float32),0),torch.unsqueeze(torch.tensor(self.action_space[j],device=self.device, dtype=torch.float32),0)))
 
         return mat_1,mat_2
 
@@ -101,13 +103,13 @@ class NashDQN(object):
                         pi_1,pi_2 = self.env.solve_stage_game(payoff_mat_1,payoff_mat_2)
                         #print((torch.FloatTensor(pi_1)@torch.FloatTensor(payoff_mat_1)@torch.FloatTensor(pi_2)))
 
-                        target_y_1[i] = batch_rewards[i][0] + self.gamma*(torch.FloatTensor(pi_1)@torch.FloatTensor(payoff_mat_1)@torch.FloatTensor(pi_2))
-                        target_y_2[i] = batch_rewards[i][1] + self.gamma*(torch.FloatTensor(pi_1)@torch.FloatTensor(payoff_mat_2)@torch.FloatTensor(pi_2))
+                        target_y_1[i] = batch_rewards[i][0] + self.gamma*(torch.tensor(pi_1,device=self.device, dtype=torch.float32)@torch.tensor(payoff_mat_1,device=self.device, dtype=torch.float32)@torch.tensor(pi_2,device=self.device, dtype=torch.float32))
+                        target_y_2[i] = batch_rewards[i][1] + self.gamma*(torch.tensor(pi_1,device=self.device, dtype=torch.float32)@torch.tensor(payoff_mat_2,device=self.device, dtype=torch.float32)@torch.tensor(pi_2,device=self.device, dtype=torch.float32))
                         #print(batch_actions[i][0].shape)
                 batch_actions = batch_actions.transpose(0,1)
                 batch_state = batch_state.transpose(0,1)
-                print(self.Q_1(batch_state[0],batch_actions[0],batch_actions[1]).shape)
-                print(target_y_1.shape)
+                # print(self.Q_1(batch_state[0],batch_actions[0],batch_actions[1]).shape)
+                # print(target_y_1.shape)
                 loss_1 = loss_func(target_y_1,self.Q_1(batch_state[0],batch_actions[0],batch_actions[1]))
                 loss_2 = loss_func(target_y_2,self.Q_2(batch_state[1],batch_actions[0],batch_actions[1]))
                 self.optimizer_1.zero_grad()
