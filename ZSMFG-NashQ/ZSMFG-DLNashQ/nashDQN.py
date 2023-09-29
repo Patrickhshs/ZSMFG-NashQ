@@ -118,6 +118,8 @@ class NashDQN(object):
                 self.optimizer_2.zero_grad()
                 loss_2.backward()
                 self.optimizer_2.step()
+                print("Training Loss for player 1 "+str(loss_1))
+                print("Training Loss for player 2 "+str(loss_2))
                 if self.training_step > 0 and self.training_step % self.save_rate == 0:
                     self.save_model(self.training_step)
                 self.training_step +=1
