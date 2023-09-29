@@ -95,8 +95,8 @@ class NashDQN(object):
                 self.replay_buffer.store(self.current_states,[self.action_space[i_alpha_1],self.action_space[i_alpha_2]],rewards,next_states)
                 self.current_states = next_states
                 batch_state,batch_actions,batch_rewards,batch_new_states = self.replay_buffer.sample(self.batch_size)
-                target_y_1 = torch.zeros((self.batch_size,1))
-                target_y_2 = torch.zeros((self.batch_size,1))
+                target_y_1 = torch.zeros((self.batch_size,1),device=self.device)
+                target_y_2 = torch.zeros((self.batch_size,1), device = self.device)
                 loss_func = torch.nn.MSELoss()
                 for i in range(self.batch_size):
                         payoff_mat_1,payoff_mat_2 = self.generate_payoff_matrix([batch_new_states[i][0],batch_new_states[i][1]])
@@ -110,8 +110,8 @@ class NashDQN(object):
                 batch_state = batch_state.transpose(0,1)
                 # print(self.Q_1(batch_state[0],batch_actions[0],batch_actions[1]).shape)
                 # print(target_y_1.shape)
-                loss_1 = loss_func(target_y_1,self.Q_1(batch_state[0],batch_actions[0],batch_actions[1]))
-                loss_2 = loss_func(target_y_2,self.Q_2(batch_state[1],batch_actions[0],batch_actions[1]))
+                loss_1 = loss_func(torch.tensor(target_y_1,device=self.device),self.Q_1(torch.tensor(batch_state[0],device=self.device),torch.tensor(batch_actions[0],device = self.device),torch.tensor(batch_actions[1],device=self.device)))
+                loss_2 = loss_func(torch.tensor(target_y_2,device=self.device),self.Q_2(torch.tensor(batch_state[1],device=self.device),torch.tensor(batch_actions[0],device = self.device),torch.tensor(batch_actions[1],device=self.device)))
                 self.optimizer_1.zero_grad()
                 loss_1.backward()
                 self.optimizer_1.step()
