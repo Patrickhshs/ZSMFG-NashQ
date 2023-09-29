@@ -30,7 +30,6 @@ class NashDQN(object):
         self.batch_size = batch_size
         self.Q_1 = baseNet(self.state_dim,self.action_dim).to(self.device)
         self.Q_2 = baseNet(self.state_dim,self.action_dim).to(self.device)
-        self.current_states = [[1,0,0],[0,0,1]]
         self.max_episode = max_episode
         self.n_steps_ctrl = n_steps_ctrl
         self.max_iteration = max_iteration
@@ -74,6 +73,7 @@ class NashDQN(object):
 
     def training(self):
         for l in tqdm(range(self.max_iteration)):
+            self.current_states = [[1,0,0],[0,0,1]]
             for i in tqdm(range(self.max_episode)):
                 payoff_mat_1, payoff_mat_2 =  self.generate_payoff_matrix(self.current_states)
                 random_number = rnd.uniform(0,1)
@@ -110,8 +110,8 @@ class NashDQN(object):
                 batch_state = batch_state.transpose(0,1)
                 # print(self.Q_1(batch_state[0],batch_actions[0],batch_actions[1]).shape)
                 # print(target_y_1.shape)
-                loss_1 = loss_func(torch.tensor(target_y_1,device=self.device),self.Q_1(torch.tensor(batch_state[0],device=self.device),torch.tensor(batch_actions[0],device = self.device),torch.tensor(batch_actions[1],device=self.device)))
-                loss_2 = loss_func(torch.tensor(target_y_2,device=self.device),self.Q_2(torch.tensor(batch_state[1],device=self.device),torch.tensor(batch_actions[0],device = self.device),torch.tensor(batch_actions[1],device=self.device)))
+                loss_1 = loss_func(target_y_1,self.target_Q_1(torch.tensor(batch_state[0],device=self.device),torch.tensor(batch_actions[0],device = self.device),torch.tensor(batch_actions[1],device=self.device)))
+                loss_2 = loss_func(target_y_2,self.target_Q_2(torch.tensor(batch_state[1],device=self.device),torch.tensor(batch_actions[0],device = self.device),torch.tensor(batch_actions[1],device=self.device)))
                 self.optimizer_1.zero_grad()
                 loss_1.backward()
                 self.optimizer_1.step()
@@ -120,16 +120,16 @@ class NashDQN(object):
                 self.optimizer_2.step()
                 if self.training_step > 0 and self.training_step % self.save_rate == 0:
                     self.save_model(self.training_step)
-                    self.target_Q_1 = copy.deepcopy(self.Q_1)
-                    self.target_Q_2 = copy.deepcopy(self.Q_2)
                 self.training_step +=1
+            self.target_Q_1 = copy.deepcopy(self.Q_1)
+            self.target_Q_2 = copy.deepcopy(self.Q_2)
 
     def save_model(self,train_step):
         num = str(train_step // self.save_rate)
-        model_path = os.path.join("ZSMFG-NashQ/ZSMFG-Nash-DQN/nashDQNmodels")
+        model_path = os.path.join("ZSMFG-DLNashQ/nashDQNmodels")
         # Target networks are initilized withthe same params
-        torch.save(self.Q_1.state_dict(),model_path +"/player_"+str(1)+ "/nn_params.pt")
-        torch.save(self.Q_2.state_dict(),model_path +"/player_"+str(2)+ "/nn_params.pt")
+        torch.save(self.Q_1.state_dict(),model_path +"/player_"+str(1)+ "_nn_params.pt")
+        torch.save(self.Q_2.state_dict(),model_path +"/player_"+str(2)+ "_nn_params.pt")
 
 
 

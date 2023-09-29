@@ -13,5 +13,5 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 if __name__ == "__main__":
     # Run Nash DQN
     print(device)
-    Players = NashDQN(lr=1e-3,action_dim=3,gamma=0.5,batch_size=24,env=env,replay_buffer=ReplayBuffer,max_iteration=100,state_dim = 3,save_rate = 100,epsilon=0.5,n_steps_ctrl=10,max_episode=20,baseNet=ValueNet,device=device)
+    Players = NashDQN(lr=1e-3,action_dim=3,gamma=0.98,batch_size=8,env=env,replay_buffer=ReplayBuffer,max_iteration=100,state_dim = 3,save_rate = 1,epsilon=0.5,n_steps_ctrl=10,max_episode=20,baseNet=ValueNet,device=device)
     Players.training()
