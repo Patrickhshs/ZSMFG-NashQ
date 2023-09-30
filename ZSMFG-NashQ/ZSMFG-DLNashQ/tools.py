@@ -8,7 +8,7 @@ class ReplayBuffer(object):
     def __init__(self,n_states,n_actions,n_players=2):
         self.n_states = n_states
         self.n_actions = n_actions
-        self.max_storage = int(1e6)
+        self.max_storage = int(1e3)
         self.count = 0 # count order as a index
         self.size = 0
         self.state_storage = np.zeros((self.max_storage,n_players,self.n_states)).astype(np.float32)

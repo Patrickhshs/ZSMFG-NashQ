@@ -15,7 +15,7 @@ import copy
 
 class NashDQN(object):
 
-    def __init__(self,lr,action_dim,gamma,batch_size,env,replay_buffer=ReplayBuffer,max_iteration=1000,state_dim = 3,save_rate = 100,epsilon=0.5,n_steps_ctrl=10,max_episode=100,baseNet=ValueNet,device = None):
+    def __init__(self,lr,action_dim,gamma,batch_size,env,replay_buffer=ReplayBuffer,tau=0.5,max_iteration=1000,state_dim = 3,save_rate = 100,epsilon=0.5,n_steps_ctrl=10,max_episode=100,baseNet=ValueNet,device = None):
 
         self.device = device
 
@@ -23,6 +23,7 @@ class NashDQN(object):
         self.gamma = gamma
         self.state_dim = state_dim
         self.action_dim = action_dim
+        self.tau = tau
 
         self.replay_buffer = replay_buffer(self.state_dim,self.action_dim)
         self.env = env
@@ -41,8 +42,8 @@ class NashDQN(object):
         self.n_action = self.action_space.shape[0]
 
         #self.payoff_mat_1,self.payoff_mat_2 = self.generate_payoff_matrix()
-        self.optimizer_1 = torch.optim.AdamW(self.Q_1.parameters(),lr=self.lr)
-        self.optimizer_2 = torch.optim.AdamW(self.Q_2.parameters(),lr=self.lr)
+        self.optimizer_1 = torch.optim.AdamW(self.Q_1.parameters(),lr=self.lr,weight_decay = 1e-5)
+        self.optimizer_2 = torch.optim.AdamW(self.Q_2.parameters(),lr=self.lr,weight_decay = 1e-5)
         # To-do:
         # set a target network to avoid overfitting
 
@@ -72,9 +73,15 @@ class NashDQN(object):
 
 
     def training(self):
+        training_loss_list_1 = []
+        training_loss_list_2 = []
+
         for l in tqdm(range(self.max_iteration)):
             self.current_states = [[1,0,0],[0,0,1]]
             for i in tqdm(range(self.max_episode)):
+                episode_loss_1 = 0
+                episode_loss_2 = 0
+
                 payoff_mat_1, payoff_mat_2 =  self.generate_payoff_matrix(self.current_states)
                 random_number = rnd.uniform(0,1)
                 if random_number >= self.epsilon:
@@ -99,13 +106,13 @@ class NashDQN(object):
                 target_y_2 = torch.zeros((self.batch_size,1), device = self.device)
                 loss_func = torch.nn.MSELoss()
                 for i in range(self.batch_size):
-                        payoff_mat_1,payoff_mat_2 = self.generate_payoff_matrix([batch_new_states[i][0],batch_new_states[i][1]])
-                        pi_1,pi_2 = self.env.solve_stage_game(payoff_mat_1,payoff_mat_2)
-                        #print((torch.FloatTensor(pi_1)@torch.FloatTensor(payoff_mat_1)@torch.FloatTensor(pi_2)))
+                    payoff_mat_1,payoff_mat_2 = self.generate_payoff_matrix([batch_new_states[i][0],batch_new_states[i][1]])
+                    pi_1,pi_2 = self.env.solve_stage_game(payoff_mat_1,payoff_mat_2)
+                    #print((torch.FloatTensor(pi_1)@torch.FloatTensor(payoff_mat_1)@torch.FloatTensor(pi_2)))
 
-                        target_y_1[i] = batch_rewards[i][0] + self.gamma*(torch.tensor(pi_1,device=self.device, dtype=torch.float32)@torch.tensor(payoff_mat_1,device=self.device, dtype=torch.float32)@torch.tensor(pi_2,device=self.device, dtype=torch.float32))
-                        target_y_2[i] = batch_rewards[i][1] + self.gamma*(torch.tensor(pi_1,device=self.device, dtype=torch.float32)@torch.tensor(payoff_mat_2,device=self.device, dtype=torch.float32)@torch.tensor(pi_2,device=self.device, dtype=torch.float32))
-                        #print(batch_actions[i][0].shape)
+                    target_y_1[i] = batch_rewards[i][0] + self.gamma*(torch.tensor(pi_1,device=self.device, dtype=torch.float32)@torch.tensor(payoff_mat_1,device=self.device, dtype=torch.float32)@torch.tensor(pi_2,device=self.device, dtype=torch.float32))
+                    target_y_2[i] = batch_rewards[i][1] + self.gamma*(torch.tensor(pi_1,device=self.device, dtype=torch.float32)@torch.tensor(payoff_mat_2,device=self.device, dtype=torch.float32)@torch.tensor(pi_2,device=self.device, dtype=torch.float32))
+                    #print(batch_actions[i][0].shape)
                 batch_actions = batch_actions.transpose(0,1)
                 batch_state = batch_state.transpose(0,1)
                 # print(self.Q_1(batch_state[0],batch_actions[0],batch_actions[1]).shape)
@@ -118,13 +125,31 @@ class NashDQN(object):
                 self.optimizer_2.zero_grad()
                 loss_2.backward()
                 self.optimizer_2.step()
+
+                episode_loss_1 += loss_1.item()
+                episode_loss_2 += loss_2.item()
+
                 print("Training Loss for player 1 "+str(loss_1))
                 print("Training Loss for player 2 "+str(loss_2))
-                if self.training_step > 0 and self.training_step % self.save_rate == 0:
-                    self.save_model(self.training_step)
                 self.training_step +=1
-            self.target_Q_1 = copy.deepcopy(self.Q_1)
-            self.target_Q_2 = copy.deepcopy(self.Q_2)
+            
+            episode_loss_1 /= self.max_episode
+            episode_loss_2 /= self.max_episode
+
+            training_loss_list_1.append(episode_loss_1)
+            training_loss_list_2.append(episode_loss_2)
+
+
+            if self.training_step > 0 and self.training_step % self.save_rate == 0:
+                self.save_model(self.training_step)
+                np.savez("ZSMFG-DLNashQ/nashDQNmodels/training_loss", player_1_loss = training_loss_list_1,player_2_loss = training_loss_list_2)
+            
+            for param,target_param in zip(self.Q_1.parameters(), self.target_Q_1.parameters()):
+                target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
+            
+            for param,target_param in zip(self.Q_2.parameters(), self.target_Q_2.parameters()):
+                target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
+
 
     def save_model(self,train_step):
         num = str(train_step // self.save_rate)
