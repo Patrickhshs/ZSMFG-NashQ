@@ -40,8 +40,16 @@ class ReplayBuffer(object):
         return batch_state,batch_action,batch_reward,batch_state_next
 
 
-def recover_equilibriums(players,max_steps):
-    
+def recover_equilibriums(Players,model_1,model_2,max_steps):
+    Players.Q_1 = Players.Q_1.load_states(model_1)
+    Players.Q_2 = Players.Q_2.load_states(model_2)
+
+    mf_states = [[1,0,0],[0,0,1]]
+    for i in range(max_steps):
+
+
+
+        return
 
 def solve_cont_stage_game():
     return 
