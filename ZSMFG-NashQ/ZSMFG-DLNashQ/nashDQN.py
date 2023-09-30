@@ -129,8 +129,8 @@ class NashDQN(object):
                 episode_loss_1 += loss_1.item()
                 episode_loss_2 += loss_2.item()
 
-                print("Training Loss for player 1 "+str(loss_1))
-                print("Training Loss for player 2 "+str(loss_2))
+                print("Training Loss for player 1 "+str(loss_1.item()))
+                print("Training Loss for player 2 "+str(loss_2.item()))
                 self.training_step +=1
             
             episode_loss_1 /= self.max_episode
@@ -141,7 +141,7 @@ class NashDQN(object):
 
 
             if self.training_step > 0 and self.training_step % self.save_rate == 0:
-                self.save_model(self.training_step)
+                self.save_model()
                 np.savez("ZSMFG-DLNashQ/nashDQNmodels/training_loss", player_1_loss = training_loss_list_1,player_2_loss = training_loss_list_2)
             
             for param,target_param in zip(self.Q_1.parameters(), self.target_Q_1.parameters()):
@@ -151,12 +151,14 @@ class NashDQN(object):
                 target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
 
 
-    def save_model(self,train_step):
-        num = str(train_step // self.save_rate)
+    def save_model(self):
+        #num = str(train_step // self.save_rate)
         model_path = os.path.join("ZSMFG-DLNashQ/nashDQNmodels")
         # Target networks are initilized withthe same params
         torch.save(self.Q_1.state_dict(),model_path +"/player_"+str(1)+ "_nn_params.pt")
         torch.save(self.Q_2.state_dict(),model_path +"/player_"+str(2)+ "_nn_params.pt")
+
+
 
 
 
