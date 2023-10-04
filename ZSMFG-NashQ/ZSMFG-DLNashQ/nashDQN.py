@@ -117,6 +117,7 @@ class NashDQN(object):
                 batch_state = batch_state.transpose(0,1)
                 # print(self.Q_1(batch_state[0],batch_actions[0],batch_actions[1]).shape)
                 # print(target_y_1.shape)
+                print(next_states)
                 loss_1 = loss_func(target_y_1,self.target_Q_1(torch.tensor(batch_state[0],device=self.device),torch.tensor(batch_actions[0],device = self.device),torch.tensor(batch_actions[1],device=self.device)))
                 loss_2 = loss_func(target_y_2,self.target_Q_2(torch.tensor(batch_state[1],device=self.device),torch.tensor(batch_actions[0],device = self.device),torch.tensor(batch_actions[1],device=self.device)))
                 self.optimizer_1.zero_grad()
@@ -142,7 +143,7 @@ class NashDQN(object):
 
             if self.training_step > 0 and self.training_step % self.save_rate == 0:
                 self.save_model()
-                np.savez("ZSMFG-DLNashQ/nashDQNmodels/training_loss", player_1_loss = training_loss_list_1,player_2_loss = training_loss_list_2)
+                np.savez("ZSMFG-NashQ/ZSMFG-DLNashQ/nashDQNmodels/training_loss", player_1_loss = training_loss_list_1,player_2_loss = training_loss_list_2)
             
             for param,target_param in zip(self.Q_1.parameters(), self.target_Q_1.parameters()):
                 target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
@@ -153,7 +154,7 @@ class NashDQN(object):
 
     def save_model(self):
         #num = str(train_step // self.save_rate)
-        model_path = os.path.join("ZSMFG-DLNashQ/nashDQNmodels")
+        model_path = os.path.join("ZSMFG-NashQ/ZSMFG-DLNashQ/nashDQNmodels")
         # Target networks are initilized withthe same params
         torch.save(self.Q_1.state_dict(),model_path +"/player_"+str(1)+ "_nn_params.pt")
         torch.save(self.Q_2.state_dict(),model_path +"/player_"+str(2)+ "_nn_params.pt")

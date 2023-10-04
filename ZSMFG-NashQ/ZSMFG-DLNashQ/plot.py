@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 npzfile = np.load("ZSMFG-NashQ/ZSMFG-DLNashQ/nashDQNmodels/training_loss.npz")
 #Q =             npzfile['Q_1_diff_sup']
 loss_1 =    np.log(npzfile['player_1_loss'])
-loss_2 =    npzfile['player_2_loss']
+loss_2 =    np.log(npzfile['player_2_loss'])
 
 
 iters =         [i for i in range(len(loss_1))]
@@ -26,11 +26,11 @@ if __name__ == "__main__":
 
     plt.clf()
     #plt.plot(iters, loss_1, label='Q_1_diff_sup',marker="s",linestyle="--")
-    plt.plot(iters, loss_1, label='Player_1_training_loss')#,marker="o")
+    plt.plot(iters, loss_2, label='Player_2_training_loss')#,marker="o")
     # plt.plot(iters, Q_2_diff_sup, label='Q_2_diff_sup',marker="d",linestyle="--")
     # plt.plot(iters, Q_2_diff_L2, label='Q_2_diff_L2',marker="x")
     plt.xlabel('iterations')
     plt.ylabel('log-scale')
     plt.legend()
-    plt.title("plot of player 1's convergence result")
-    plt.savefig("ZSMFG-NashQ/ZSMFG-DLNashQ/plots/loss_1.pdf")
+    plt.title("plot of player 2's convergence result")
+    plt.savefig("ZSMFG-NashQ/ZSMFG-DLNashQ/plots/loss_2.pdf")
